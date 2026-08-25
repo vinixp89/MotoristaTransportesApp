@@ -29,6 +29,7 @@ export default function CorridasScreen() {
   const [iniciando, setIniciando] = useState(false)
   const [finalizando, setFinalizando] = useState(false)
   const [distanciaReal, setDistanciaReal] = useState('')
+  const [codigo, setCodigo] = useState('')
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const buscar = useCallback(async () => {
@@ -57,7 +58,10 @@ export default function CorridasScreen() {
   }, [buscar])
 
   useEffect(() => {
-    if (corridaAtual) setDistanciaReal(corridaAtual.distanciaEstimadaKm.toFixed(1))
+    if (corridaAtual) {
+      setDistanciaReal(corridaAtual.distanciaEstimadaKm.toFixed(1))
+      setCodigo('')
+    }
   }, [corridaAtual?.id])
 
   async function handleAceitar(id: string) {
@@ -81,8 +85,9 @@ export default function CorridasScreen() {
     setErro('')
 
     try {
-      const { data } = await api.patch<Corrida>(`/Corridas/${corridaAtual.id}/iniciar`)
+      const { data } = await api.patch<Corrida>(`/Corridas/${corridaAtual.id}/iniciar`, { codigo })
       setCorridaAtual(data)
+      setCodigo('')
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
@@ -130,6 +135,8 @@ export default function CorridasScreen() {
           iniciando={iniciando}
           finalizando={finalizando}
           distanciaReal={distanciaReal}
+          codigo={codigo}
+          onCodigoChange={setCodigo}
           onDistanciaChange={setDistanciaReal}
           onIniciar={handleIniciar}
           onFinalizar={handleFinalizar}
@@ -181,6 +188,8 @@ function PainelCorridaAtual({
   iniciando,
   finalizando,
   distanciaReal,
+  codigo,
+  onCodigoChange,
   onDistanciaChange,
   onIniciar,
   onFinalizar,
@@ -189,6 +198,8 @@ function PainelCorridaAtual({
   iniciando: boolean
   finalizando: boolean
   distanciaReal: string
+  codigo: string
+  onCodigoChange: (v: string) => void
   onDistanciaChange: (v: string) => void
   onIniciar: () => void
   onFinalizar: () => void
@@ -231,13 +242,27 @@ function PainelCorridaAtual({
       </View>
 
       {corrida.status === STATUS_CONFIRMADA ? (
-        <Pressable
-          onPress={onIniciar}
-          disabled={iniciando}
-          style={({ pressed }) => [styles.botao, (pressed || iniciando) && styles.botaoPressionado]}
-        >
-          <Text style={styles.botaoTexto}>{iniciando ? 'Iniciando...' : 'Iniciar viagem'}</Text>
-        </Pressable>
+        <View style={styles.formFinalizar}>
+          <Text style={styles.rotulo}>Código informado pelo cliente</Text>
+          <TextInput
+            value={codigo}
+            onChangeText={(v) => onCodigoChange(v.replace(/\D/g, '').slice(0, 4))}
+            keyboardType="number-pad"
+            maxLength={4}
+            placeholder="0000"
+            style={[styles.input, styles.inputCodigo]}
+          />
+          <Pressable
+            onPress={onIniciar}
+            disabled={iniciando || codigo.length !== 4}
+            style={({ pressed }) => [
+              styles.botao,
+              (pressed || iniciando || codigo.length !== 4) && styles.botaoPressionado,
+            ]}
+          >
+            <Text style={styles.botaoTexto}>{iniciando ? 'Iniciando...' : 'Iniciar viagem'}</Text>
+          </Pressable>
+        </View>
       ) : (
         <View style={styles.formFinalizar}>
           <Text style={styles.rotulo}>Distância percorrida (km)</Text>
@@ -422,5 +447,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: cores.texto,
     backgroundColor: cores.fundo,
+  },
+  inputCodigo: {
+    textAlign: 'center',
+    fontSize: 20,
+    letterSpacing: 8,
   },
 })
