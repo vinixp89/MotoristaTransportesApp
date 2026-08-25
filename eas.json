@@ -5,6 +5,9 @@
   "build": {
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://barge-require-ribcage.ngrok-free.dev/api"
+      },
       "android": {
         "buildType": "apk"
       }
