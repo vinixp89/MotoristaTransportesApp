@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Vai na Boa Motorista",
+    "slug": "vai-na-boa-motorista",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#faf5ff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vainaboa.motorista",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Precisamos da sua localização pra te mostrar pros clientes e acompanhar o trajeto até eles."
+      }
+    },
+    "android": {
+      "package": "com.vainaboa.motorista",
+      "adaptiveIcon": {
+        "backgroundColor": "#9333ea",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Precisamos da sua localização pra te mostrar pros clientes e acompanhar o trajeto até eles."
+        }
+      ]
+    ]
+  }
+}
