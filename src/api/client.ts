@@ -46,10 +46,19 @@ export function extrairMensagemErro(error: unknown): string {
     return 'A API demorou demais pra responder (timeout de 15s). Confira se o celular e o computador estão na mesma rede e se o firewall libera a porta da API.'
   }
 
+  const status = (error as { response?: { status?: number } })?.response?.status
+
   const data = (error as { response?: { data?: unknown } })?.response?.data as
     | { mensagem?: string; errors?: Record<string, string[]> }
     | string
     | undefined
+
+  // 401/403 sem corpo (comum no [Authorize] padrão do ASP.NET, que não manda mensagem
+  // nenhuma) não pode cair na mensagem de "não contatei a API" — a API respondeu, só que
+  // recusou por permissão, o que é um problema bem diferente de conexão.
+  if (!data && (status === 401 || status === 403)) {
+    return 'Sem permissão pra acessar isso com essa conta. Confira se ela está cadastrada com o perfil certo.'
+  }
 
   if (!data) return 'Não foi possível contatar a API. Confira se ela está rodando e se o EXPO_PUBLIC_API_URL está certo.'
 
