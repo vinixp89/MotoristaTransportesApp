@@ -44,7 +44,12 @@ export function useEnvioLocalizacao(ativo: boolean) {
 
     return () => {
       cancelado = true
-      assinatura?.remove()
+      try {
+        assinatura?.remove()
+      } catch {
+        // No preview web, o expo-location tem um bug conhecido nessa chamada — não deixa isso
+        // derrubar o app; no dispositivo real funciona normal.
+      }
     }
   }, [ativo])
 

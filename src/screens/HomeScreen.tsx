@@ -128,6 +128,7 @@ export default function HomeScreen({ navigation }: Props) {
       const { data } = await api.patch<Corrida>(`/Corridas/${id}/atribuir-motorista`)
       setCorridaAtual(data)
       setPendentes([])
+      navigation.navigate('Navegacao', { corridaId: data.id })
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
@@ -234,6 +235,7 @@ export default function HomeScreen({ navigation }: Props) {
           onDistanciaChange={setDistanciaReal}
           onIniciar={handleIniciar}
           onFinalizar={handleFinalizar}
+          onNavegar={() => navigation.navigate('Navegacao', { corridaId: corridaAtual.id })}
         />
       ) : pendentes.length === 0 ? (
         <View style={styles.cartaoVazio}>
@@ -290,6 +292,7 @@ function PainelCorridaAtual({
   onDistanciaChange,
   onIniciar,
   onFinalizar,
+  onNavegar,
 }: {
   corrida: Corrida
   iniciando: boolean
@@ -300,6 +303,7 @@ function PainelCorridaAtual({
   onDistanciaChange: (v: string) => void
   onIniciar: () => void
   onFinalizar: () => void
+  onNavegar: () => void
 }) {
   const faixa = obterFaixa(corrida.faixaContratada)
   const status = obterStatusLabel(corrida.status)
@@ -340,6 +344,13 @@ function PainelCorridaAtual({
           <Text style={styles.valorGanho}>Você ganha: {formatarPreco(corrida.valorMotorista)} (85%)</Text>
         </View>
       </View>
+
+      <Pressable
+        onPress={onNavegar}
+        style={({ pressed }) => [styles.botaoNavegar, pressed && styles.pressionado]}
+      >
+        <Text style={styles.botaoNavegarTexto}>🧭 Abrir navegação</Text>
+      </Pressable>
 
       {corrida.status === STATUS_CONFIRMADA ? (
         <View style={styles.formFinalizar}>
@@ -585,6 +596,19 @@ const styles = StyleSheet.create({
     color: cores.branco,
     fontSize: 14,
     fontWeight: '600',
+  },
+  botaoNavegar: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: cores.primaria,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  botaoNavegarTexto: {
+    color: cores.primaria,
+    fontSize: 14,
+    fontWeight: '700',
   },
   formFinalizar: {
     marginTop: 16,
