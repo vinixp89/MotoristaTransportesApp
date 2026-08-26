@@ -17,3 +17,4 @@ export function obterStatusLabel(status: number) {
 // Status com motorista já atribuído e ainda não finalizado (Confirmada ou EmAndamento).
 export const STATUS_CONFIRMADA = 1
 export const STATUS_EM_ANDAMENTO = 3
+export const STATUS_FINALIZADA = 4

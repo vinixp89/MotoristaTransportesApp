@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
 import api, { extrairMensagemErro } from '../api/client'
 import { obterFaixa, formatarPreco } from '../constants/faixas'
-import { obterStatusLabel } from '../constants/statusCorrida'
+import { obterStatusLabel, STATUS_FINALIZADA } from '../constants/statusCorrida'
 import { cores } from '../theme/colors'
 import type { Corrida } from '../types/corrida'
 
@@ -63,6 +63,9 @@ export default function ExtratoScreen() {
 
                 <View style={styles.linhaDireita}>
                   <Text style={styles.valor}>{formatarPreco(c.valorReferencia)}</Text>
+                  {c.status === STATUS_FINALIZADA && (
+                    <Text style={styles.valorGanho}>Você ganhou: {formatarPreco(c.valorMotorista)}</Text>
+                  )}
                   <View style={[styles.statusBadge, { backgroundColor: status.corFundo }]}>
                     <Text style={[styles.statusTexto, { color: status.corTexto }]}>{status.texto}</Text>
                   </View>
@@ -157,6 +160,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: cores.texto,
+  },
+  valorGanho: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: cores.primaria,
+    marginTop: 1,
   },
   statusBadge: {
     borderRadius: 999,

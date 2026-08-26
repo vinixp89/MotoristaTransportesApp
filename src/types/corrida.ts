@@ -19,6 +19,7 @@ export type Corrida = {
   distanciaRealKm: number | null
   faixaContratada: number
   valorReferencia: number
+  valorMotorista: number
   tipoConsumo: number
   status: number
   dataSolicitacao: string

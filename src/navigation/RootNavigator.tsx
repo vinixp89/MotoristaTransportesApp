@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext'
 import { cores } from '../theme/colors'
 import LoginScreen from '../screens/LoginScreen'
 import HomeScreen from '../screens/HomeScreen'
-import CorridasScreen from '../screens/CorridasScreen'
 import ExtratoScreen from '../screens/ExtratoScreen'
 import type { RootStackParamList } from './types'
 
@@ -26,7 +25,6 @@ export default function RootNavigator() {
       {usuario ? (
         <>
           <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Corridas" component={CorridasScreen} options={{ title: 'Corridas' }} />
           <Stack.Screen name="Extrato" component={ExtratoScreen} options={{ title: 'Extrato de corridas' }} />
         </>
       ) : (
