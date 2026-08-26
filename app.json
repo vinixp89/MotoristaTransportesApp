@@ -28,7 +28,11 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -40,6 +44,11 @@
           "locationWhenInUsePermission": "Precisamos da sua localização pra te mostrar pros clientes e acompanhar o trajeto até eles."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7dedf857-6ccd-418a-8c68-81f13e3abbf6"
+      }
+    }
   }
 }
