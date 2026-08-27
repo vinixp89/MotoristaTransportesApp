@@ -6,7 +6,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://barge-require-ribcage.ngrok-free.dev/api"
+        "EXPO_PUBLIC_API_URL": "http://143.95.165.225:8080/api"
       },
       "android": {
         "buildType": "apk"
