@@ -43,14 +43,6 @@
         {
           "locationWhenInUsePermission": "Precisamos da sua localização pra te mostrar pros clientes e acompanhar o trajeto até eles."
         }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": true
-          }
-        }
       ]
     ],
     "extra": {

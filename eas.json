@@ -6,7 +6,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://143.95.165.225:8080/api"
+        "EXPO_PUBLIC_API_URL": "https://api.vainaboamobilidade.com.br/api"
       },
       "android": {
         "buildType": "apk"
