@@ -214,6 +214,13 @@ export default function HomeScreen({ navigation }: Props) {
         </Pressable>
       </View>
 
+      <Pressable
+        onPress={() => navigation.navigate('PlanoExecutivo')}
+        style={({ pressed }) => [styles.cardExecutivo, pressed && styles.pressionado]}
+      >
+        <Text style={styles.cardExecutivoTexto}>⭐ Categoria Executivo</Text>
+      </Pressable>
+
       {(erro || erroLocalizacao) ? (
         <View style={styles.erroCaixa}>
           <Text style={styles.erroTexto}>{erro || erroLocalizacao}</Text>
@@ -476,6 +483,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: cores.primaria,
+  },
+  cardExecutivo: {
+    backgroundColor: '#111827',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  cardExecutivoTexto: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: cores.branco,
   },
   bolinha: {
     width: 10,

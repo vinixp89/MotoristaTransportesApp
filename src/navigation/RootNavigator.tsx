@@ -7,6 +7,7 @@ import CadastroScreen from '../screens/CadastroScreen'
 import HomeScreen from '../screens/HomeScreen'
 import ExtratoScreen from '../screens/ExtratoScreen'
 import NavegacaoScreen from '../screens/NavegacaoScreen'
+import PlanoExecutivoScreen from '../screens/PlanoExecutivoScreen'
 import type { RootStackParamList } from './types'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -29,6 +30,7 @@ export default function RootNavigator() {
           <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Extrato" component={ExtratoScreen} options={{ title: 'Extrato de corridas' }} />
           <Stack.Screen name="Navegacao" component={NavegacaoScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="PlanoExecutivo" component={PlanoExecutivoScreen} options={{ title: 'Categoria Executivo' }} />
         </>
       ) : (
         <>

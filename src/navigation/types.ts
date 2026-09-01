@@ -4,4 +4,5 @@ export type RootStackParamList = {
   Home: undefined
   Extrato: undefined
   Navegacao: { corridaId: string }
+  PlanoExecutivo: undefined
 }
