@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,8 +14,11 @@ import {
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
 import { cores } from '../theme/colors'
+import type { RootStackParamList } from '../navigation/types'
 
-export default function LoginScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, 'Login'>
+
+export default function LoginScreen({ navigation }: Props) {
   const { carregando, login } = useAuth()
 
   const [email, setEmail] = useState('')
@@ -36,9 +41,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
-        <View style={styles.logoBadge}>
-          <Text style={styles.logoBadgeTexto}>VB</Text>
-        </View>
+        <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.titulo}>Vai na Boa Motorista</Text>
         <Text style={styles.subtitulo}>Entre com sua conta para continuar</Text>
 
@@ -89,6 +92,10 @@ export default function LoginScreen() {
             <Text style={styles.botaoTexto}>Entrar</Text>
           )}
         </Pressable>
+
+        <Pressable onPress={() => navigation.navigate('Cadastro')} hitSlop={8} style={styles.linkCadastro}>
+          <Text style={styles.linkTexto}>Não tem conta? <Text style={styles.linkTextoDestaque}>Criar conta</Text></Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   )
@@ -106,19 +113,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 48,
   },
-  logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: cores.primaria,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logo: {
+    width: 72,
+    height: 72,
     marginBottom: 12,
-  },
-  logoBadgeTexto: {
-    color: cores.branco,
-    fontSize: 22,
-    fontWeight: '700',
   },
   titulo: {
     fontSize: 24,
@@ -183,5 +181,17 @@ const styles = StyleSheet.create({
     color: cores.branco,
     fontSize: 15,
     fontWeight: '600',
+  },
+  linkCadastro: {
+    marginTop: 18,
+    alignItems: 'center',
+  },
+  linkTexto: {
+    fontSize: 13,
+    color: cores.textoSecundario,
+  },
+  linkTextoDestaque: {
+    fontWeight: '700',
+    color: cores.primaria,
   },
 })

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -173,11 +174,14 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <ScrollView style={styles.tela} contentContainerStyle={styles.conteudo}>
       <View style={styles.cabecalho}>
-        <View>
-          <Text style={styles.saudacao}>Olá!</Text>
-          <Text style={styles.perfil}>
-            Perfil: {usuario?.roles.length ? usuario.roles.join(', ') : 'sem perfil definido'}
-          </Text>
+        <View style={styles.linhaLogo}>
+          <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
+          <View>
+            <Text style={styles.saudacao}>Olá!</Text>
+            <Text style={styles.perfil}>
+              Perfil: {usuario?.roles.length ? usuario.roles.join(', ') : 'sem perfil definido'}
+            </Text>
+          </View>
         </View>
 
         <Pressable onPress={logout} hitSlop={8}>
@@ -415,6 +419,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 20,
+  },
+  linhaLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logo: {
+    width: 40,
+    height: 40,
   },
   saudacao: {
     fontSize: 22,

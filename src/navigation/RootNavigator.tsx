@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '../context/AuthContext'
 import { cores } from '../theme/colors'
 import LoginScreen from '../screens/LoginScreen'
+import CadastroScreen from '../screens/CadastroScreen'
 import HomeScreen from '../screens/HomeScreen'
 import ExtratoScreen from '../screens/ExtratoScreen'
 import NavegacaoScreen from '../screens/NavegacaoScreen'
@@ -30,7 +31,10 @@ export default function RootNavigator() {
           <Stack.Screen name="Navegacao" component={NavegacaoScreen} options={{ headerShown: false }} />
         </>
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Cadastro" component={CadastroScreen} options={{ headerShown: false }} />
+        </>
       )}
     </Stack.Navigator>
   )

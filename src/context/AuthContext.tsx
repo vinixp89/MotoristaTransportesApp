@@ -9,11 +9,29 @@ type Usuario = {
   roles: string[]
 }
 
+export type DadosCadastroMotorista = {
+  cnh: string
+  cpf: string
+  placaVeiculo: string
+  modeloVeiculo: string
+  logradouro: string
+  numero: string
+  complemento?: string
+  bairro: string
+  cidade: string
+  estado: string
+}
+
 type AuthContextType = {
   usuario: Usuario | null
   carregando: boolean
   verificandoSessao: boolean
   login: (email: string, senha: string) => Promise<{ sucesso: boolean; mensagem?: string }>
+  cadastrar: (
+    email: string,
+    senha: string,
+    motorista: DadosCadastroMotorista
+  ) => Promise<{ sucesso: boolean; mensagem?: string }>
   logout: () => Promise<void>
 }
 
@@ -72,13 +90,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function cadastrar(email: string, senha: string, motorista: DadosCadastroMotorista) {
+    setCarregando(true)
+
+    try {
+      const { data } = await api.post('/Auth/registrar-motorista', { email, senha, motorista })
+
+      await salvarToken(data.token)
+      setUsuario(decodificarUsuario(data.token))
+
+      return { sucesso: true }
+    } catch (error) {
+      return { sucesso: false, mensagem: extrairMensagemErro(error) }
+    } finally {
+      setCarregando(false)
+    }
+  }
+
   async function logout() {
     await apagarToken()
     setUsuario(null)
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, carregando, verificandoSessao, login, logout }}>
+    <AuthContext.Provider value={{ usuario, carregando, verificandoSessao, login, cadastrar, logout }}>
       {children}
     </AuthContext.Provider>
   )
