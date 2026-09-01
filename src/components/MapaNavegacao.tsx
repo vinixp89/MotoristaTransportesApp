@@ -38,7 +38,7 @@ function montarHtml(pontosRota: Ponto[], destino: Ponto, corHex: string, posicao
     const mapa = L.map('mapa', { zoomControl: false, attributionControl: false }).setView(
       [posicaoAtual.latitude, posicaoAtual.longitude], 17
     );
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapa);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
 
     L.polyline(pontosRota.map((p) => [p.latitude, p.longitude]), { color: corHex, weight: 6, opacity: 0.9 }).addTo(mapa);
     L.circleMarker([destino.latitude, destino.longitude], {
