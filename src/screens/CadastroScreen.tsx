@@ -18,8 +18,13 @@ import type { RootStackParamList } from '../navigation/types'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Cadastro'>
 
+const ANO_ATUAL = new Date().getFullYear()
+// Espelha Motorista.IdadeMaximaVeiculoAnos no backend — mantém os dois em sincronia manualmente,
+// já que são projetos separados.
+const IDADE_MAXIMA_VEICULO_ANOS = 12
+
 // Formulário de cadastro de Motorista — espelha os campos exigidos pelo backend
-// (POST /Auth/registrar-motorista: email, senha, motorista{cnh,cpf,placaVeiculo,modeloVeiculo,endereço}).
+// (POST /Auth/registrar-motorista: email, senha, motorista{cnh,cpf,placaVeiculo,modeloVeiculo,anoVeiculo,endereço}).
 export default function CadastroScreen({ navigation }: Props) {
   const { carregando, cadastrar } = useAuth()
 
@@ -27,6 +32,7 @@ export default function CadastroScreen({ navigation }: Props) {
   const [cpf, setCpf] = useState('')
   const [placaVeiculo, setPlacaVeiculo] = useState('')
   const [modeloVeiculo, setModeloVeiculo] = useState('')
+  const [anoVeiculo, setAnoVeiculo] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
@@ -35,7 +41,7 @@ export default function CadastroScreen({ navigation }: Props) {
 
   const enderecoResolvido = Boolean(endereco.logradouro)
   const camposObrigatoriosPreenchidos =
-    cnh && cpf && placaVeiculo && modeloVeiculo && email && senha && confirmarSenha && enderecoResolvido
+    cnh && cpf && placaVeiculo && modeloVeiculo && anoVeiculo && email && senha && confirmarSenha && enderecoResolvido
 
   async function handleCadastrar() {
     setErro('')
@@ -45,11 +51,19 @@ export default function CadastroScreen({ navigation }: Props) {
       return
     }
 
+    const anoVeiculoNumero = Number(anoVeiculo)
+
+    if (!Number.isInteger(anoVeiculoNumero) || anoVeiculoNumero < ANO_ATUAL - IDADE_MAXIMA_VEICULO_ANOS || anoVeiculoNumero > ANO_ATUAL) {
+      setErro(`O veículo precisa ter no máximo ${IDADE_MAXIMA_VEICULO_ANOS} anos de fabricação (a partir de ${ANO_ATUAL - IDADE_MAXIMA_VEICULO_ANOS}).`)
+      return
+    }
+
     const resultado = await cadastrar(email, senha, {
       cnh,
       cpf,
       placaVeiculo,
       modeloVeiculo,
+      anoVeiculo: anoVeiculoNumero,
       logradouro: endereco.logradouro,
       numero: endereco.numero,
       complemento: endereco.complemento,
@@ -111,11 +125,27 @@ export default function CadastroScreen({ navigation }: Props) {
             <TextInput
               value={modeloVeiculo}
               onChangeText={setModeloVeiculo}
-              placeholder="Ex: Onix 2022"
+              placeholder="Ex: Onix"
               placeholderTextColor="#9ca3af"
               style={styles.input}
             />
           </View>
+        </View>
+
+        <View style={styles.campo}>
+          <Text style={styles.rotulo}>Ano de fabricação do veículo</Text>
+          <TextInput
+            value={anoVeiculo}
+            onChangeText={setAnoVeiculo}
+            placeholder={`Ex: ${ANO_ATUAL}`}
+            placeholderTextColor="#9ca3af"
+            keyboardType="number-pad"
+            maxLength={4}
+            style={styles.input}
+          />
+          <Text style={styles.ajuda}>
+            Aceitamos veículos com até {IDADE_MAXIMA_VEICULO_ANOS} anos de fabricação (a partir de {ANO_ATUAL - IDADE_MAXIMA_VEICULO_ANOS}).
+          </Text>
         </View>
 
         <View style={styles.campo}>
@@ -221,6 +251,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: cores.texto,
     marginBottom: 6,
+  },
+  ajuda: {
+    fontSize: 12,
+    color: cores.textoSecundario,
+    marginTop: 6,
   },
   input: {
     borderWidth: 1,

@@ -14,6 +14,7 @@ export type DadosCadastroMotorista = {
   cpf: string
   placaVeiculo: string
   modeloVeiculo: string
+  anoVeiculo: number
   logradouro: string
   numero: string
   complemento?: string
