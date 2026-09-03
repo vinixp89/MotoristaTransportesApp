@@ -13,13 +13,16 @@ import {
   View,
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
-import { cores } from '../theme/colors'
+import { useTema } from '../context/ThemeContext'
+import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>
 
 export default function LoginScreen({ navigation }: Props) {
   const { carregando, login } = useAuth()
+  const { cores } = useTema()
+  const styles = criarEstilos(cores)
 
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -101,7 +104,8 @@ export default function LoginScreen({ navigation }: Props) {
   )
 }
 
-const styles = StyleSheet.create({
+function criarEstilos(cores: Cores) {
+  return StyleSheet.create({
   tela: {
     flex: 1,
     backgroundColor: cores.fundo,
@@ -194,4 +198,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: cores.primaria,
   },
-})
+  })
+}

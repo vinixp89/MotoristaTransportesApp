@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import api, { extrairMensagemErro } from '../api/client'
-import { cores } from '../theme/colors'
+import { useTema } from '../context/ThemeContext'
+import type { Cores } from '../theme/colors'
 
 export type Endereco = {
   logradouro: string
@@ -29,9 +30,10 @@ type Props = {
   onChange: (endereco: Endereco) => void
 }
 
-// Campo de endereço com autocomplete via API — mesma lógica do EnderecoFields.tsx do app
-// Cliente, só que sem o hook de tema (o app Motorista ainda não tem modo escuro).
+// Campo de endereço com autocomplete via API — mesma lógica do EnderecoFields.tsx do app Cliente.
 export default function EnderecoFields({ titulo, valores, onChange }: Props) {
+  const { cores } = useTema()
+  const styles = criarEstilos(cores)
   const [texto, setTexto] = useState('')
   const [sugestoes, setSugestoes] = useState<Sugestao[]>([])
   const [mostrarLista, setMostrarLista] = useState(false)
@@ -161,7 +163,8 @@ export default function EnderecoFields({ titulo, valores, onChange }: Props) {
   )
 }
 
-const styles = StyleSheet.create({
+function criarEstilos(cores: Cores) {
+  return StyleSheet.create({
   container: {
     marginBottom: 16,
   },
@@ -238,4 +241,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: cores.textoSecundario,
   },
-})
+  })
+}

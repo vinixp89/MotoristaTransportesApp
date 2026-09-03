@@ -1,7 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '../context/AuthContext'
-import { cores } from '../theme/colors'
+import { useTema } from '../context/ThemeContext'
+import ThemeToggleButton from '../components/ThemeToggleButton'
 import LoginScreen from '../screens/LoginScreen'
 import CadastroScreen from '../screens/CadastroScreen'
 import HomeScreen from '../screens/HomeScreen'
@@ -14,6 +15,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>()
 
 export default function RootNavigator() {
   const { usuario, verificandoSessao } = useAuth()
+  const { cores } = useTema()
 
   if (verificandoSessao) {
     return (
@@ -24,7 +26,15 @@ export default function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerTintColor: cores.primaria }}>
+    <Stack.Navigator
+      screenOptions={{
+        headerTintColor: cores.primaria,
+        headerStyle: { backgroundColor: cores.cartao },
+        headerTitleStyle: { color: cores.texto },
+        contentStyle: { backgroundColor: cores.fundo },
+        headerRight: () => <ThemeToggleButton />,
+      }}
+    >
       {usuario ? (
         <>
           <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />

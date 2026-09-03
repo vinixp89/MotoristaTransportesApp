@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
   ActivityIndicator,
+  Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,10 +13,62 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
+import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useTema } from '../context/ThemeContext'
 import EnderecoFields, { enderecoVazio, type Endereco } from '../components/EnderecoFields'
-import { cores } from '../theme/colors'
+import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
+
+type FotoSlot = { uri: string; nome: string; tipo: string } | null
+
+const CAMPOS_FOTO = [
+  { chave: 'selfie' as const, rotulo: 'Selfie', dica: 'Seu rosto, bem visível' },
+  { chave: 'fotoVeiculo' as const, rotulo: 'Foto do veículo', dica: 'De frente, o carro inteiro' },
+  { chave: 'fotoPlaca' as const, rotulo: 'Foto da placa', dica: 'Placa legível, de perto' },
+]
+
+// Abre um Alert perguntando câmera ou galeria, e devolve o arquivo escolhido pronto pra mandar
+// como multipart (ver handleCadastrar) — ou null se o motorista cancelar em qualquer etapa.
+function escolherFoto(nomeCampo: string): Promise<FotoSlot> {
+  return new Promise((resolve) => {
+    Alert.alert('Adicionar foto', undefined, [
+      { text: 'Cancelar', style: 'cancel', onPress: () => resolve(null) },
+      {
+        text: 'Câmera',
+        onPress: async () => {
+          const permissao = await ImagePicker.requestCameraPermissionsAsync()
+          if (!permissao.granted) {
+            resolve(null)
+            return
+          }
+          const resultado = await ImagePicker.launchCameraAsync({ quality: 0.7 })
+          resolve(paraFotoSlot(resultado, nomeCampo))
+        },
+      },
+      {
+        text: 'Galeria',
+        onPress: async () => {
+          const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync()
+          if (!permissao.granted) {
+            resolve(null)
+            return
+          }
+          const resultado = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
+          resolve(paraFotoSlot(resultado, nomeCampo))
+        },
+      },
+    ])
+  })
+}
+
+function paraFotoSlot(resultado: ImagePicker.ImagePickerResult, nomeCampo: string): FotoSlot {
+  if (resultado.canceled || !resultado.assets?.[0]) return null
+
+  const asset = resultado.assets[0]
+  return { uri: asset.uri, nome: `${nomeCampo}.jpg`, tipo: asset.mimeType ?? 'image/jpeg' }
+}
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Cadastro'>
 
@@ -27,6 +81,8 @@ const IDADE_MAXIMA_VEICULO_ANOS = 12
 // (POST /Auth/registrar-motorista: email, senha, motorista{cnh,cpf,placaVeiculo,modeloVeiculo,anoVeiculo,endereço}).
 export default function CadastroScreen({ navigation }: Props) {
   const { carregando, cadastrar } = useAuth()
+  const { cores } = useTema()
+  const styles = criarEstilos(cores)
 
   const [cnh, setCnh] = useState('')
   const [cpf, setCpf] = useState('')
@@ -37,11 +93,32 @@ export default function CadastroScreen({ navigation }: Props) {
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [endereco, setEndereco] = useState<Endereco>(enderecoVazio)
+  const [fotos, setFotos] = useState<Record<'selfie' | 'fotoVeiculo' | 'fotoPlaca', FotoSlot>>({
+    selfie: null,
+    fotoVeiculo: null,
+    fotoPlaca: null,
+  })
+  const [enviandoFotos, setEnviandoFotos] = useState(false)
   const [erro, setErro] = useState('')
 
   const enderecoResolvido = Boolean(endereco.logradouro)
+  const fotosPreenchidas = fotos.selfie && fotos.fotoVeiculo && fotos.fotoPlaca
   const camposObrigatoriosPreenchidos =
-    cnh && cpf && placaVeiculo && modeloVeiculo && anoVeiculo && email && senha && confirmarSenha && enderecoResolvido
+    cnh &&
+    cpf &&
+    placaVeiculo &&
+    modeloVeiculo &&
+    anoVeiculo &&
+    email &&
+    senha &&
+    confirmarSenha &&
+    enderecoResolvido &&
+    fotosPreenchidas
+
+  async function handleEscolherFoto(campo: keyof typeof fotos) {
+    const foto = await escolherFoto(campo)
+    if (foto) setFotos((atual) => ({ ...atual, [campo]: foto }))
+  }
 
   async function handleCadastrar() {
     setErro('')
@@ -74,6 +151,27 @@ export default function CadastroScreen({ navigation }: Props) {
 
     if (!resultado.sucesso) {
       setErro(resultado.mensagem ?? 'Não foi possível criar sua conta.')
+      return
+    }
+
+    // As fotos só podem ser enviadas depois da conta existir (o endpoint exige motorista logado).
+    // Se isso falhar, a conta já foi criada normalmente — não trava o cadastro, só avisa.
+    setEnviandoFotos(true)
+
+    try {
+      const dadosFormulario = new FormData()
+      for (const [campo, foto] of Object.entries(fotos)) {
+        if (!foto) continue
+        dadosFormulario.append(campo, { uri: foto.uri, name: foto.nome, type: foto.tipo } as unknown as Blob)
+      }
+
+      await api.post('/Motoristas/fotos', dadosFormulario, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    } catch {
+      setErro('Conta criada, mas as fotos não foram enviadas. Entre em contato com o suporte pra reenviá-las.')
+    } finally {
+      setEnviandoFotos(false)
     }
   }
 
@@ -189,6 +287,33 @@ export default function CadastroScreen({ navigation }: Props) {
 
         <EnderecoFields titulo="Endereço" valores={endereco} onChange={setEndereco} />
 
+        <View style={styles.campo}>
+          <Text style={styles.rotulo}>Fotos de verificação</Text>
+          <View style={styles.linhaFotos}>
+            {CAMPOS_FOTO.map(({ chave, rotulo, dica }) => {
+              const foto = fotos[chave]
+              return (
+                <Pressable key={chave} onPress={() => handleEscolherFoto(chave)} style={styles.fotoSlot}>
+                  {foto ? (
+                    <>
+                      <Image source={{ uri: foto.uri }} style={styles.fotoPreview} />
+                      <View style={styles.fotoSelo}>
+                        <Text style={styles.fotoSeloTexto}>✓ {rotulo}</Text>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.fotoIcone}>📷</Text>
+                      <Text style={styles.fotoRotulo}>{rotulo}</Text>
+                      <Text style={styles.fotoDica}>{dica}</Text>
+                    </>
+                  )}
+                </Pressable>
+              )
+            })}
+          </View>
+        </View>
+
         {erro ? (
           <View style={styles.erroCaixa}>
             <Text style={styles.erroTexto}>{erro}</Text>
@@ -197,14 +322,18 @@ export default function CadastroScreen({ navigation }: Props) {
 
         <Pressable
           onPress={handleCadastrar}
-          disabled={carregando || !camposObrigatoriosPreenchidos}
+          disabled={carregando || enviandoFotos || !camposObrigatoriosPreenchidos}
           style={({ pressed }) => [
             styles.botao,
-            (carregando || !camposObrigatoriosPreenchidos) && styles.botaoDesabilitado,
+            (carregando || enviandoFotos || !camposObrigatoriosPreenchidos) && styles.botaoDesabilitado,
             pressed && styles.botaoPressionado,
           ]}
         >
-          {carregando ? <ActivityIndicator color={cores.branco} /> : <Text style={styles.botaoTexto}>Criar conta</Text>}
+          {carregando || enviandoFotos ? (
+            <ActivityIndicator color={cores.branco} />
+          ) : (
+            <Text style={styles.botaoTexto}>Criar conta</Text>
+          )}
         </Pressable>
 
         <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={styles.linkVoltar}>
@@ -215,7 +344,8 @@ export default function CadastroScreen({ navigation }: Props) {
   )
 }
 
-const styles = StyleSheet.create({
+function criarEstilos(cores: Cores) {
+  return StyleSheet.create({
   tela: {
     flex: 1,
     backgroundColor: cores.fundo,
@@ -305,4 +435,55 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: cores.primaria,
   },
-})
+  linhaFotos: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  fotoSlot: {
+    flex: 1,
+    aspectRatio: 0.85,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: cores.borda,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    gap: 4,
+    overflow: 'hidden',
+    backgroundColor: cores.cartao,
+  },
+  fotoPreview: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
+  },
+  fotoIcone: {
+    fontSize: 22,
+  },
+  fotoRotulo: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: cores.texto,
+    textAlign: 'center',
+  },
+  fotoDica: {
+    fontSize: 9,
+    color: cores.textoSecundario,
+    textAlign: 'center',
+  },
+  fotoSelo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingVertical: 4,
+  },
+  fotoSeloTexto: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  })
+}

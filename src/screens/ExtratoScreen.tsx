@@ -3,12 +3,15 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import api, { extrairMensagemErro } from '../api/client'
 import { obterFaixa, formatarPreco } from '../constants/faixas'
 import { obterStatusLabel, STATUS_FINALIZADA } from '../constants/statusCorrida'
-import { cores } from '../theme/colors'
+import { useTema } from '../context/ThemeContext'
+import type { Cores } from '../theme/colors'
 import type { Corrida } from '../types/corrida'
 
 // Espelha a ExtratoCorridasPage do front-end web: histórico de corridas do motorista logado,
 // mais recentes primeiro (GET /Corridas/minhas).
 export default function ExtratoScreen() {
+  const { cores } = useTema()
+  const styles = criarEstilos(cores)
   const [corridas, setCorridas] = useState<Corrida[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -79,7 +82,8 @@ export default function ExtratoScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+function criarEstilos(cores: Cores) {
+  return StyleSheet.create({
   tela: {
     flex: 1,
     backgroundColor: cores.fundo,
@@ -176,4 +180,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
   },
-})
+  })
+}

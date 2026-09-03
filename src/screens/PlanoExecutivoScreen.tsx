@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import api, { extrairMensagemErro } from '../api/client'
 import { formatarPreco } from '../constants/faixas'
-import { cores } from '../theme/colors'
+import { useTema } from '../context/ThemeContext'
+import type { Cores } from '../theme/colors'
 
 const ANO_ATUAL = new Date().getFullYear()
 
@@ -17,6 +18,8 @@ type Assinatura = { id: string; precoMensal: number; status: number } | null
 // navegador do celular (Linking.openURL, sem precisar de nenhuma dependência nativa nova) — só
 // depois de confirmado é que o motorista passa a ver/aceitar corridas Executivo.
 export default function PlanoExecutivoScreen() {
+  const { cores } = useTema()
+  const styles = criarEstilos(cores)
   const [assinatura, setAssinatura] = useState<Assinatura>(null)
   const [anoVeiculo, setAnoVeiculo] = useState(String(ANO_ATUAL))
   const [carregando, setCarregando] = useState(true)
@@ -142,7 +145,8 @@ export default function PlanoExecutivoScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+function criarEstilos(cores: Cores) {
+  return StyleSheet.create({
   tela: {
     flex: 1,
     backgroundColor: cores.fundo,
@@ -263,4 +267,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-})
+  })
+}

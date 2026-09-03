@@ -16,7 +16,9 @@ import api, { extrairMensagemErro } from '../api/client'
 import { obterFaixa, formatarPreco } from '../constants/faixas'
 import { obterStatusLabel, STATUS_CONFIRMADA } from '../constants/statusCorrida'
 import { notificarCorridaNova } from '../notifications/config'
-import { cores } from '../theme/colors'
+import { useTema } from '../context/ThemeContext'
+import ThemeToggleButton from '../components/ThemeToggleButton'
+import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
 import type { Corrida } from '../types/corrida'
 
@@ -32,6 +34,8 @@ const INTERVALO_MS = 5000
 // navegar pra outra tela — com notificação sonora assim que uma corrida nova surge.
 export default function HomeScreen({ navigation }: Props) {
   const { usuario, logout } = useAuth()
+  const { cores } = useTema()
+  const styles = criarEstilos(cores)
   const [online, setOnline] = useState(false)
   const [alternando, setAlternando] = useState(false)
   const [erro, setErro] = useState('')
@@ -184,9 +188,12 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <Pressable onPress={logout} hitSlop={8}>
-          <Text style={styles.sair}>Sair</Text>
-        </Pressable>
+        <View style={styles.acoesCabecalho}>
+          <ThemeToggleButton />
+          <Pressable onPress={logout} hitSlop={8}>
+            <Text style={styles.sair}>Sair</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.linhaTopo2}>
@@ -316,6 +323,8 @@ function PainelCorridaAtual({
   onFinalizar: () => void
   onNavegar: () => void
 }) {
+  const { cores } = useTema()
+  const styles = criarEstilos(cores)
   const faixa = obterFaixa(corrida.faixaContratada)
   const status = obterStatusLabel(corrida.status)
 
@@ -411,7 +420,8 @@ function PainelCorridaAtual({
   )
 }
 
-const styles = StyleSheet.create({
+function criarEstilos(cores: Cores) {
+  return StyleSheet.create({
   tela: {
     flex: 1,
     backgroundColor: cores.fundo,
@@ -445,6 +455,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: cores.textoSecundario,
     marginTop: 2,
+  },
+  acoesCabecalho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   sair: {
     fontSize: 14,
@@ -677,4 +692,5 @@ const styles = StyleSheet.create({
     color: cores.erroTexto,
     fontSize: 13,
   },
-})
+  })
+}

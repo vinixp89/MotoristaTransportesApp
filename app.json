@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -16,7 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.vainaboa.motorista",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Precisamos da sua localização pra te mostrar pros clientes e acompanhar o trajeto até eles."
+        "NSLocationWhenInUseUsageDescription": "Precisamos da sua localização pra te mostrar pros clientes e acompanhar o trajeto até eles.",
+        "NSCameraUsageDescription": "Usamos a câmera pra tirar a selfie e as fotos do veículo/placa exigidas no cadastro.",
+        "NSPhotoLibraryUsageDescription": "Usamos sua galeria pra escolher a selfie e as fotos do veículo/placa exigidas no cadastro."
       }
     },
     "android": {
@@ -42,6 +44,13 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Precisamos da sua localização pra te mostrar pros clientes e acompanhar o trajeto até eles."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Usamos a câmera pra tirar a selfie e as fotos do veículo/placa exigidas no cadastro.",
+          "photosPermission": "Usamos sua galeria pra escolher a selfie e as fotos do veículo/placa exigidas no cadastro."
         }
       ]
     ],

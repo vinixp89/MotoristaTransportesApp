@@ -11,7 +11,8 @@ import {
   formatarDuracaoRestante,
   obterIconeInstrucao,
 } from '../utils/navegacaoGps'
-import { cores } from '../theme/colors'
+import { useTema } from '../context/ThemeContext'
+import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
 import type { Corrida } from '../types/corrida'
 
@@ -25,6 +26,8 @@ const INTERVALO_MS = 5000
 // assim que ele aceita uma corrida (ver HomeScreen) — o motorista fica aqui até finalizar.
 export default function NavegacaoScreen({ route, navigation }: Props) {
   const { corridaId } = route.params
+  const { cores } = useTema()
+  const styles = criarEstilos(cores)
 
   const [corrida, setCorrida] = useState<Corrida | null>(null)
   const [erro, setErro] = useState('')
@@ -207,7 +210,8 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
   )
 }
 
-const styles = StyleSheet.create({
+function criarEstilos(cores: Cores) {
+  return StyleSheet.create({
   tela: {
     flex: 1,
     backgroundColor: cores.fundo,
@@ -369,4 +373,5 @@ const styles = StyleSheet.create({
     color: cores.erroTexto,
     fontSize: 12,
   },
-})
+  })
+}
