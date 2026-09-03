@@ -221,12 +221,21 @@ export default function HomeScreen({ navigation }: Props) {
         </Pressable>
       </View>
 
-      <Pressable
-        onPress={() => navigation.navigate('PlanoExecutivo')}
-        style={({ pressed }) => [styles.cardExecutivo, pressed && styles.pressionado]}
-      >
-        <Text style={styles.cardExecutivoTexto}>⭐ Categoria Executivo</Text>
-      </Pressable>
+      <View style={styles.linhaCards}>
+        <Pressable
+          onPress={() => navigation.navigate('Carteira')}
+          style={({ pressed }) => [styles.cardExecutivo, styles.cardMetade, pressed && styles.pressionado]}
+        >
+          <Text style={styles.cardExecutivoTexto}>💰 Saldo e saques</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => navigation.navigate('PlanoExecutivo')}
+          style={({ pressed }) => [styles.cardExecutivo, styles.cardMetade, pressed && styles.pressionado]}
+        >
+          <Text style={styles.cardExecutivoTexto}>⭐ Executivo</Text>
+        </Pressable>
+      </View>
 
       {(erro || erroLocalizacao) ? (
         <View style={styles.erroCaixa}>
@@ -498,6 +507,15 @@ function criarEstilos(cores: Cores) {
     fontSize: 12,
     fontWeight: '600',
     color: cores.primaria,
+  },
+  linhaCards: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  cardMetade: {
+    flex: 1,
+    marginBottom: 0,
   },
   cardExecutivo: {
     backgroundColor: '#111827',

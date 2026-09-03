@@ -5,4 +5,6 @@ export type RootStackParamList = {
   Extrato: undefined
   Navegacao: { corridaId: string }
   PlanoExecutivo: undefined
+  Carteira: undefined
+  SolicitarSaque: { saldo: number; valorMinimo: number }
 }
