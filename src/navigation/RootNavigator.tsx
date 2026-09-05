@@ -11,6 +11,7 @@ import NavegacaoScreen from '../screens/NavegacaoScreen'
 import PlanoExecutivoScreen from '../screens/PlanoExecutivoScreen'
 import CarteiraScreen from '../screens/CarteiraScreen'
 import SolicitarSaqueScreen from '../screens/SolicitarSaqueScreen'
+import PoliticaPrivacidadeScreen from '../screens/PoliticaPrivacidadeScreen'
 import type { RootStackParamList } from './types'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -45,6 +46,7 @@ export default function RootNavigator() {
           <Stack.Screen name="PlanoExecutivo" component={PlanoExecutivoScreen} options={{ title: 'Categoria Executivo' }} />
           <Stack.Screen name="Carteira" component={CarteiraScreen} options={{ title: 'Saldo e saques' }} />
           <Stack.Screen name="SolicitarSaque" component={SolicitarSaqueScreen} options={{ title: 'Solicitar saque' }} />
+          <Stack.Screen name="PoliticaPrivacidade" component={PoliticaPrivacidadeScreen} options={{ title: 'Política de privacidade' }} />
         </>
       ) : (
         <>

@@ -190,6 +190,9 @@ export default function HomeScreen({ navigation }: Props) {
 
         <View style={styles.acoesCabecalho}>
           <ThemeToggleButton />
+          <Pressable onPress={() => navigation.navigate('PoliticaPrivacidade')} hitSlop={8}>
+            <Text style={styles.sair}>Privacidade</Text>
+          </Pressable>
           <Pressable onPress={logout} hitSlop={8}>
             <Text style={styles.sair}>Sair</Text>
           </Pressable>

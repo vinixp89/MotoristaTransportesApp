@@ -7,4 +7,5 @@ export type RootStackParamList = {
   PlanoExecutivo: undefined
   Carteira: undefined
   SolicitarSaque: { saldo: number; valorMinimo: number }
+  PoliticaPrivacidade: undefined
 }
