@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import api, { extrairMensagemErro } from '../api/client'
 import { formatarPreco } from '../constants/faixas'
+import { useConfigApp } from '../hooks/useConfigApp'
 import { useTema } from '../context/ThemeContext'
 import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
@@ -30,6 +31,7 @@ function statusSaqueLabel(status: number) {
 export default function CarteiraScreen({ navigation }: Props) {
   const { cores } = useTema()
   const styles = criarEstilos(cores)
+  const { carteiraMotoristaLiberada, carregando: carregandoConfig } = useConfigApp()
 
   const [carteira, setCarteira] = useState<CarteiraMotorista | null>(null)
   const [extrato, setExtrato] = useState<TransacaoCarteiraMotorista[]>([])
@@ -67,10 +69,20 @@ export default function CarteiraScreen({ navigation }: Props) {
     setAtualizando(false)
   }
 
-  if (carregando) {
+  if (carregando || carregandoConfig) {
     return (
       <View style={styles.centralizado}>
         <ActivityIndicator color={cores.primaria} size="large" />
+      </View>
+    )
+  }
+
+  // Segunda trava (a primeira é esconder o card na Home) pra quem chegar aqui direto via link —
+  // ver useConfigApp.
+  if (!carteiraMotoristaLiberada) {
+    return (
+      <View style={styles.centralizado}>
+        <Text style={styles.textoVazio}>Essa função estará disponível em breve.</Text>
       </View>
     )
   }

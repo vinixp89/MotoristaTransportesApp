@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
+import { useConfigApp } from '../hooks/useConfigApp'
 import { useEnvioLocalizacao } from '../hooks/useEnvioLocalizacao'
 import api, { extrairMensagemErro } from '../api/client'
 import { obterFaixa, formatarPreco } from '../constants/faixas'
@@ -34,6 +35,7 @@ const INTERVALO_MS = 5000
 // navegar pra outra tela — com notificação sonora assim que uma corrida nova surge.
 export default function HomeScreen({ navigation }: Props) {
   const { usuario, logout } = useAuth()
+  const { carteiraMotoristaLiberada } = useConfigApp()
   const { cores } = useTema()
   const styles = criarEstilos(cores)
   const [online, setOnline] = useState(false)
@@ -225,12 +227,14 @@ export default function HomeScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.linhaCards}>
-        <Pressable
-          onPress={() => navigation.navigate('Carteira')}
-          style={({ pressed }) => [styles.cardExecutivo, styles.cardMetade, pressed && styles.pressionado]}
-        >
-          <Text style={styles.cardExecutivoTexto}>💰 Saldo e saques</Text>
-        </Pressable>
+        {carteiraMotoristaLiberada ? (
+          <Pressable
+            onPress={() => navigation.navigate('Carteira')}
+            style={({ pressed }) => [styles.cardExecutivo, styles.cardMetade, pressed && styles.pressionado]}
+          >
+            <Text style={styles.cardExecutivoTexto}>💰 Saldo e saques</Text>
+          </Pressable>
+        ) : null}
 
         <Pressable
           onPress={() => navigation.navigate('PlanoExecutivo')}
