@@ -13,10 +13,11 @@ const STATUS_PENDENTE_PAGAMENTO = 0
 
 type Assinatura = { id: string; precoMensal: number; status: number } | null
 
-// Assinatura da categoria Executivo — veículo até 3 anos (sedan médio ou SUV), R$99,90, pagamento
-// único via Mercado Pago (mesmo fluxo do site, ver MotoristaExecutivoPage.jsx). Abre o checkout no
-// navegador do celular (Linking.openURL, sem precisar de nenhuma dependência nativa nova) — só
-// depois de confirmado é que o motorista passa a ver/aceitar corridas Executivo.
+// Assinatura da categoria Executivo — veículo até 3 anos (sedan médio ou SUV), R$99,90/mês (1º mês
+// grátis), cobrança recorrente de verdade via Mercado Pago (Preapproval, mesmo fluxo do site, ver
+// MotoristaExecutivoPage.jsx). Abre a autorização no navegador do celular (Linking.openURL, sem
+// precisar de nenhuma dependência nativa nova) — só depois de confirmado é que o motorista passa a
+// ver/aceitar corridas Executivo.
 export default function PlanoExecutivoScreen() {
   const { cores } = useTema()
   const styles = criarEstilos(cores)
@@ -87,6 +88,7 @@ export default function PlanoExecutivoScreen() {
           <Text style={styles.precoValor}>{formatarPreco(99.9)}</Text>
           <Text style={styles.precoPeriodo}>/mês</Text>
         </View>
+        <Text style={styles.mesGratis}>🎉 1º mês grátis — cobrança só a partir do 2º mês</Text>
         <View style={{ gap: 4, marginTop: 12 }}>
           <Text style={styles.beneficio}>• Corridas com valor mais alto por faixa</Text>
           <Text style={styles.beneficio}>• Veículo com até 3 anos de fabricação</Text>
@@ -185,6 +187,12 @@ function criarEstilos(cores: Cores) {
   beneficio: {
     fontSize: 13,
     color: '#d1d5db',
+  },
+  mesGratis: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4ade80',
+    marginTop: 8,
   },
   cartao: {
     backgroundColor: cores.cartao,
