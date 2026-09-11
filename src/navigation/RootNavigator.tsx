@@ -12,6 +12,9 @@ import PlanoExecutivoScreen from '../screens/PlanoExecutivoScreen'
 import CarteiraScreen from '../screens/CarteiraScreen'
 import SolicitarSaqueScreen from '../screens/SolicitarSaqueScreen'
 import PoliticaPrivacidadeScreen from '../screens/PoliticaPrivacidadeScreen'
+import NotificacoesScreen from '../screens/NotificacoesScreen'
+import SobreAppScreen from '../screens/SobreAppScreen'
+import ConfiguracoesContaScreen from '../screens/ConfiguracoesContaScreen'
 import type { RootStackParamList } from './types'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -47,6 +50,9 @@ export default function RootNavigator() {
           <Stack.Screen name="Carteira" component={CarteiraScreen} options={{ title: 'Saldo e saques' }} />
           <Stack.Screen name="SolicitarSaque" component={SolicitarSaqueScreen} options={{ title: 'Solicitar saque' }} />
           <Stack.Screen name="PoliticaPrivacidade" component={PoliticaPrivacidadeScreen} options={{ title: 'Política de privacidade' }} />
+          <Stack.Screen name="Notificacoes" component={NotificacoesScreen} options={{ title: 'Notificações' }} />
+          <Stack.Screen name="SobreApp" component={SobreAppScreen} options={{ title: 'Sobre o app' }} />
+          <Stack.Screen name="ConfiguracoesConta" component={ConfiguracoesContaScreen} options={{ title: 'Configurações da conta' }} />
         </>
       ) : (
         <>

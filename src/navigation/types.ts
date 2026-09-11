@@ -8,4 +8,7 @@ export type RootStackParamList = {
   Carteira: undefined
   SolicitarSaque: { saldo: number; valorMinimo: number }
   PoliticaPrivacidade: undefined
+  Notificacoes: undefined
+  SobreApp: undefined
+  ConfiguracoesConta: undefined
 }

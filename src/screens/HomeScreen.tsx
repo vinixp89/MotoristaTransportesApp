@@ -19,6 +19,7 @@ import { obterStatusLabel, STATUS_CONFIRMADA } from '../constants/statusCorrida'
 import { notificarCorridaNova } from '../notifications/config'
 import { useTema } from '../context/ThemeContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
+import MenuHamburguer from '../components/MenuHamburguer'
 import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
 import type { Corrida } from '../types/corrida'
@@ -192,9 +193,7 @@ export default function HomeScreen({ navigation }: Props) {
 
         <View style={styles.acoesCabecalho}>
           <ThemeToggleButton />
-          <Pressable onPress={() => navigation.navigate('PoliticaPrivacidade')} hitSlop={8}>
-            <Text style={styles.sair}>Privacidade</Text>
-          </Pressable>
+          <MenuHamburguer navigation={navigation} />
           <Pressable onPress={logout} hitSlop={8}>
             <Text style={styles.sair}>Sair</Text>
           </Pressable>

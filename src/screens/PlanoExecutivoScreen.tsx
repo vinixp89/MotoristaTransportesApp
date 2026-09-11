@@ -13,7 +13,7 @@ const STATUS_PENDENTE_PAGAMENTO = 0
 
 type Assinatura = { id: string; precoMensal: number; status: number } | null
 
-// Assinatura da categoria Executivo — veículo até 3 anos (sedan médio ou SUV), R$49,90, pagamento
+// Assinatura da categoria Executivo — veículo até 3 anos (sedan médio ou SUV), R$99,90, pagamento
 // único via Mercado Pago (mesmo fluxo do site, ver MotoristaExecutivoPage.jsx). Abre o checkout no
 // navegador do celular (Linking.openURL, sem precisar de nenhuma dependência nativa nova) — só
 // depois de confirmado é que o motorista passa a ver/aceitar corridas Executivo.
@@ -84,7 +84,7 @@ export default function PlanoExecutivoScreen() {
       <View style={styles.cartaoDestaque}>
         <Text style={styles.destaqueTitulo}>EXECUTIVO</Text>
         <View style={styles.precoLinha}>
-          <Text style={styles.precoValor}>{formatarPreco(49.9)}</Text>
+          <Text style={styles.precoValor}>{formatarPreco(99.9)}</Text>
           <Text style={styles.precoPeriodo}>/mês</Text>
         </View>
         <View style={{ gap: 4, marginTop: 12 }}>
