@@ -84,6 +84,7 @@ export default function CadastroScreen({ navigation }: Props) {
   const { cores } = useTema()
   const styles = criarEstilos(cores)
 
+  const [nome, setNome] = useState('')
   const [cnh, setCnh] = useState('')
   const [cpf, setCpf] = useState('')
   const [placaVeiculo, setPlacaVeiculo] = useState('')
@@ -123,6 +124,7 @@ export default function CadastroScreen({ navigation }: Props) {
   const enderecoResolvido = Boolean(endereco.logradouro)
   const fotosPreenchidas = fotos.selfie && fotos.fotoVeiculo && fotos.fotoPlaca
   const camposObrigatoriosPreenchidos =
+    nome &&
     cnh &&
     cpf &&
     placaVeiculo &&
@@ -171,6 +173,7 @@ export default function CadastroScreen({ navigation }: Props) {
     const anoVeiculoNumero = Number(anoVeiculo)
 
     const resultado = await cadastrar(email, senha, {
+      nome,
       cnh,
       cpf,
       placaVeiculo,
@@ -233,6 +236,17 @@ export default function CadastroScreen({ navigation }: Props) {
 
         {etapa === 'form' && (
         <>
+        <View style={styles.campo}>
+          <Text style={styles.rotulo}>Nome completo</Text>
+          <TextInput
+            value={nome}
+            onChangeText={setNome}
+            placeholder="Seu nome"
+            placeholderTextColor="#9ca3af"
+            style={styles.input}
+          />
+        </View>
+
         <View style={styles.linhaDupla}>
           <View style={[styles.campo, styles.campoMetade]}>
             <Text style={styles.rotulo}>CNH</Text>

@@ -12,11 +12,13 @@ type Usuario = {
 // Só os campos que o app precisa pra decidir se o cadastro está completo (ver
 // RootNavigator) — espelha um subconjunto de MotoristaResponse do backend.
 export type MotoristaPerfil = {
+  nome: string
   telefoneVerificado: boolean
   termosAceitos: boolean
 }
 
 export type DadosCadastroMotorista = {
+  nome: string
   cnh: string
   cpf: string
   placaVeiculo: string
