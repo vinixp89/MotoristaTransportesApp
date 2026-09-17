@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import api, { extrairMensagemErro } from '../api/client'
 import MapaNavegacao from '../components/MapaNavegacao'
 import AvaliacaoForm, { TIPO_USUARIO } from '../components/AvaliacaoForm'
@@ -21,6 +22,46 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Navegacao'>
 
 const STATUS_CANCELADA = 5
 const INTERVALO_MS = 5000
+
+// Selfie de auditoria (câmera frontal, nunca galeria — pra não dar pra "burlar" com foto antiga)
+// tirada ao iniciar/finalizar a corrida. É só um registro pra conferência do Admin depois (ver
+// backend VerificacaoFacialService) — NUNCA bloqueia a viagem: se a permissão for negada ou o
+// motorista cancelar a captura, a corrida segue normal sem essa foto.
+async function capturarSelfieVerificacao(): Promise<ImagePicker.ImagePickerAsset | null> {
+  try {
+    const permissao = await ImagePicker.requestCameraPermissionsAsync()
+    if (!permissao.granted) return null
+
+    const resultado = await ImagePicker.launchCameraAsync({
+      cameraType: ImagePicker.CameraType.front,
+      quality: 0.5,
+      allowsEditing: false,
+    })
+
+    if (resultado.canceled || !resultado.assets?.length) return null
+    return resultado.assets[0]
+  } catch {
+    return null
+  }
+}
+
+// Envio em segundo plano — nunca é aguardado por quem chama, e qualquer erro (rede, comparação)
+// fica só registrado no backend, sem aparecer pro motorista.
+function enviarVerificacaoFacial(corridaId: string, momento: 'Inicio' | 'Fim', foto: ImagePicker.ImagePickerAsset) {
+  const formData = new FormData()
+  formData.append('momento', momento)
+  formData.append('foto', {
+    uri: foto.uri,
+    name: 'verificacao.jpg',
+    type: 'image/jpeg',
+  } as unknown as Blob)
+
+  api
+    .post(`/Corridas/${corridaId}/verificacao-facial`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .catch(() => {})
+}
 
 // Navegação turn-by-turn tipo Maps/Waze: enquanto o motorista ainda não iniciou a viagem, guia
 // ele até o CLIENTE (origem da corrida); depois de iniciar, guia até o DESTINO. Aberta sozinha
@@ -83,10 +124,13 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
     setIniciando(true)
     setErro('')
 
+    const foto = await capturarSelfieVerificacao()
+
     try {
       const { data } = await api.patch<Corrida>(`/Corridas/${corrida.id}/iniciar`, { codigo })
       setCorrida(data)
       setCodigo('')
+      if (foto) enviarVerificacaoFacial(corrida.id, 'Inicio', foto)
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
@@ -99,11 +143,14 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
     setFinalizando(true)
     setErro('')
 
+    const foto = await capturarSelfieVerificacao()
+
     try {
       const { data } = await api.patch<{ corrida: Corrida }>(`/Corridas/${corrida.id}/finalizar`, {
         distanciaReal: Number(distanciaReal),
       })
       setCorrida(data.corrida)
+      if (foto) enviarVerificacaoFacial(corrida.id, 'Fim', foto)
       if (intervaloRef.current) {
         clearInterval(intervaloRef.current)
         intervaloRef.current = null
