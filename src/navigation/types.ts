@@ -1,9 +1,11 @@
 export type RootStackParamList = {
   Login: undefined
   Cadastro: undefined
+  ConfirmarSms: undefined
   Home: undefined
   Extrato: undefined
   Navegacao: { corridaId: string }
+  ChatCorrida: { corridaId: string }
   PlanoExecutivo: undefined
   Carteira: undefined
   SolicitarSaque: { saldo: number; valorMinimo: number }

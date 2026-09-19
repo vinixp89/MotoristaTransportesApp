@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
   ActivityIndicator,
@@ -101,6 +101,25 @@ export default function CadastroScreen({ navigation }: Props) {
   const [enviandoFotos, setEnviandoFotos] = useState(false)
   const [erro, setErro] = useState('')
 
+  // 2ª etapa, só de termos — o resto do cadastro (dados + fotos) continua numa página só, igual já
+  // era. Confirmação por SMS não entra aqui: acontece DEPOIS da conta criada (ver
+  // ConfirmarSmsScreen), forçada pelo RootNavigator quando perfil.telefoneVerificado vier false.
+  const [etapa, setEtapa] = useState<'form' | 'termos'>('form')
+  const [termosTexto, setTermosTexto] = useState('')
+  const [carregandoTermos, setCarregandoTermos] = useState(false)
+  const [termosAceitos, setTermosAceitos] = useState(false)
+
+  useEffect(() => {
+    if (etapa !== 'termos' || termosTexto) return
+
+    setCarregandoTermos(true)
+    api
+      .get<{ texto: string }>('/Config/termos')
+      .then(({ data }) => setTermosTexto(data.texto))
+      .catch(() => setErro('Não foi possível carregar os termos de uso. Tente de novo.'))
+      .finally(() => setCarregandoTermos(false))
+  }, [etapa, termosTexto])
+
   const enderecoResolvido = Boolean(endereco.logradouro)
   const fotosPreenchidas = fotos.selfie && fotos.fotoVeiculo && fotos.fotoPlaca
   const camposObrigatoriosPreenchidos =
@@ -120,7 +139,7 @@ export default function CadastroScreen({ navigation }: Props) {
     if (foto) setFotos((atual) => ({ ...atual, [campo]: foto }))
   }
 
-  async function handleCadastrar() {
+  function handleProximoForm() {
     setErro('')
 
     if (senha !== confirmarSenha) {
@@ -134,6 +153,22 @@ export default function CadastroScreen({ navigation }: Props) {
       setErro(`O veículo precisa ter no máximo ${IDADE_MAXIMA_VEICULO_ANOS} anos de fabricação (a partir de ${ANO_ATUAL - IDADE_MAXIMA_VEICULO_ANOS}).`)
       return
     }
+
+    setEtapa('termos')
+  }
+
+  // Só chega aqui com os termos aceitos — cria a conta e, com ela criada, manda as fotos e registra
+  // o aceite. Lenient com falha nesses dois últimos passos: a conta já existe, então não trava o
+  // cadastro por um upload que falhou.
+  async function handleFinalizar() {
+    setErro('')
+
+    if (!termosAceitos) {
+      setErro('Você precisa aceitar os termos de uso pra continuar.')
+      return
+    }
+
+    const anoVeiculoNumero = Number(anoVeiculo)
 
     const resultado = await cadastrar(email, senha, {
       cnh,
@@ -154,9 +189,8 @@ export default function CadastroScreen({ navigation }: Props) {
       return
     }
 
-    // As fotos só podem ser enviadas depois da conta existir (o endpoint exige motorista logado).
-    // Se isso falhar, a conta já foi criada normalmente — não trava o cadastro, só avisa.
     setEnviandoFotos(true)
+    const falhas: string[] = []
 
     try {
       const dadosFormulario = new FormData()
@@ -169,18 +203,36 @@ export default function CadastroScreen({ navigation }: Props) {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
     } catch {
-      setErro('Conta criada, mas as fotos não foram enviadas. Entre em contato com o suporte pra reenviá-las.')
-    } finally {
-      setEnviandoFotos(false)
+      falhas.push('as fotos')
     }
+
+    try {
+      await api.post('/Auth/aceitar-termos')
+    } catch {
+      falhas.push('o aceite dos termos')
+    }
+
+    setEnviandoFotos(false)
+
+    if (falhas.length > 0) {
+      setErro(`Conta criada, mas ${falhas.join(' e ')} não foram registrados. Tente de novo em Configurações da conta.`)
+    }
+
+    // Sem navigation aqui de propósito: a conta já existe (usuario setado no AuthContext), o
+    // RootNavigator já trocou de stack sozinho — daqui em diante quem decide a próxima tela
+    // (ConfirmarSmsScreen ou Home) é ele, olhando perfil.telefoneVerificado.
   }
 
   return (
     <KeyboardAvoidingView style={styles.tela} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
         <Text style={styles.titulo}>Criar conta de motorista</Text>
-        <Text style={styles.subtitulo}>Preencha seus dados pra começar a aceitar corridas.</Text>
+        <Text style={styles.subtitulo}>
+          {etapa === 'form' ? 'Preencha seus dados pra começar a aceitar corridas.' : 'Só falta aceitar os termos de uso.'}
+        </Text>
 
+        {etapa === 'form' && (
+        <>
         <View style={styles.linhaDupla}>
           <View style={[styles.campo, styles.campoMetade]}>
             <Text style={styles.rotulo}>CNH</Text>
@@ -313,6 +365,29 @@ export default function CadastroScreen({ navigation }: Props) {
             })}
           </View>
         </View>
+        </>
+        )}
+
+        {etapa === 'termos' && (
+          <View style={styles.campo}>
+            <View style={styles.termosCaixa}>
+              {carregandoTermos ? (
+                <ActivityIndicator color={cores.primaria} />
+              ) : (
+                <ScrollView style={styles.termosScroll} nestedScrollEnabled>
+                  <Text style={styles.termosTexto}>{termosTexto}</Text>
+                </ScrollView>
+              )}
+            </View>
+
+            <Pressable onPress={() => setTermosAceitos((atual) => !atual)} style={styles.checkboxLinha}>
+              <View style={[styles.checkbox, termosAceitos && styles.checkboxMarcado]}>
+                {termosAceitos ? <Text style={styles.checkboxMarca}>✓</Text> : null}
+              </View>
+              <Text style={styles.checkboxTexto}>Li e aceito os termos de uso e o contrato de prestação de serviços.</Text>
+            </Pressable>
+          </View>
+        )}
 
         {erro ? (
           <View style={styles.erroCaixa}>
@@ -320,25 +395,42 @@ export default function CadastroScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        <Pressable
-          onPress={handleCadastrar}
-          disabled={carregando || enviandoFotos || !camposObrigatoriosPreenchidos}
-          style={({ pressed }) => [
-            styles.botao,
-            (carregando || enviandoFotos || !camposObrigatoriosPreenchidos) && styles.botaoDesabilitado,
-            pressed && styles.botaoPressionado,
-          ]}
-        >
-          {carregando || enviandoFotos ? (
-            <ActivityIndicator color={cores.branco} />
-          ) : (
-            <Text style={styles.botaoTexto}>Criar conta</Text>
+        <View style={styles.linhaBotoes}>
+          {etapa === 'termos' && (
+            <Pressable onPress={() => setEtapa('form')} style={styles.botaoVoltar}>
+              <Text style={styles.botaoVoltarTexto}>Voltar</Text>
+            </Pressable>
           )}
-        </Pressable>
 
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={styles.linkVoltar}>
-          <Text style={styles.linkVoltarTexto}>Já tenho conta — Entrar</Text>
-        </Pressable>
+          <Pressable
+            onPress={etapa === 'form' ? handleProximoForm : handleFinalizar}
+            disabled={
+              carregando ||
+              enviandoFotos ||
+              (etapa === 'form' ? !camposObrigatoriosPreenchidos : !termosAceitos)
+            }
+            style={({ pressed }) => [
+              styles.botao,
+              (carregando ||
+                enviandoFotos ||
+                (etapa === 'form' ? !camposObrigatoriosPreenchidos : !termosAceitos)) &&
+                styles.botaoDesabilitado,
+              pressed && styles.botaoPressionado,
+            ]}
+          >
+            {carregando || enviandoFotos ? (
+              <ActivityIndicator color={cores.branco} />
+            ) : (
+              <Text style={styles.botaoTexto}>{etapa === 'form' ? 'Próximo' : 'Criar conta'}</Text>
+            )}
+          </Pressable>
+        </View>
+
+        {etapa === 'form' && (
+          <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={styles.linkVoltar}>
+            <Text style={styles.linkVoltarTexto}>Já tenho conta — Entrar</Text>
+          </Pressable>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   )
@@ -408,12 +500,78 @@ function criarEstilos(cores: Cores) {
     color: cores.erroTexto,
     fontSize: 13,
   },
+  linhaBotoes: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  botaoVoltar: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  botaoVoltarTexto: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: cores.texto,
+  },
+  termosCaixa: {
+    height: 260,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    borderRadius: 10,
+    backgroundColor: cores.cartao,
+    padding: 12,
+    justifyContent: 'center',
+  },
+  termosScroll: {
+    flex: 1,
+  },
+  termosTexto: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: cores.texto,
+  },
+  checkboxLinha: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginTop: 14,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  checkboxMarcado: {
+    backgroundColor: cores.primaria,
+    borderColor: cores.primaria,
+  },
+  checkboxMarca: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  checkboxTexto: {
+    flex: 1,
+    fontSize: 13,
+    color: cores.texto,
+    lineHeight: 18,
+  },
   botao: {
+    flex: 2,
     backgroundColor: cores.primaria,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 4,
   },
   botaoPressionado: {
     backgroundColor: cores.primariaEscura,

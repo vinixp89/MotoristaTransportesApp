@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import api, { extrairMensagemErro } from '../api/client'
 import MapaNavegacao from '../components/MapaNavegacao'
+import AvaliacaoForm, { TIPO_USUARIO } from '../components/AvaliacaoForm'
 import { useNavegacaoGps } from '../hooks/useNavegacaoGps'
 import { obterFaixa, formatarPreco } from '../constants/faixas'
 import { STATUS_CONFIRMADA, STATUS_FINALIZADA } from '../constants/statusCorrida'
@@ -42,9 +43,15 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
       const { data } = await api.get<Corrida>(`/Corridas/${corridaId}`)
       setCorrida(data)
 
-      if (data.status === STATUS_FINALIZADA || data.status === STATUS_CANCELADA) {
+      // Cancelada não tem o que avaliar — volta direto. Finalizada para o polling mas NÃO navega:
+      // fica na tela mostrando o resumo + avaliação do cliente (ver renderização abaixo), só volta
+      // pra Home quando o motorista mesmo apertar "Concluir".
+      if (data.status === STATUS_CANCELADA) {
         if (intervaloRef.current) clearInterval(intervaloRef.current)
         navigation.replace('Home')
+      } else if (data.status === STATUS_FINALIZADA && intervaloRef.current) {
+        clearInterval(intervaloRef.current)
+        intervaloRef.current = null
       }
     } catch (error) {
       setErro(extrairMensagemErro(error))
@@ -93,8 +100,14 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
     setErro('')
 
     try {
-      await api.patch(`/Corridas/${corrida.id}/finalizar`, { distanciaReal: Number(distanciaReal) })
-      navigation.replace('Home')
+      const { data } = await api.patch<{ corrida: Corrida }>(`/Corridas/${corrida.id}/finalizar`, {
+        distanciaReal: Number(distanciaReal),
+      })
+      setCorrida(data.corrida)
+      if (intervaloRef.current) {
+        clearInterval(intervaloRef.current)
+        intervaloRef.current = null
+      }
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
@@ -107,6 +120,29 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
       <View style={styles.centralizado}>
         {erro ? <Text style={styles.erroTextoSolo}>{erro}</Text> : <ActivityIndicator color={cores.primaria} size="large" />}
       </View>
+    )
+  }
+
+  if (corrida.status === STATUS_FINALIZADA) {
+    const faixaFinalizada = obterFaixa(corrida.faixaContratada)
+    return (
+      <ScrollView style={styles.tela} contentContainerStyle={styles.conteudoFinalizada}>
+        <Text style={styles.finalizadaTitulo}>Corrida finalizada!</Text>
+        <Text style={[styles.finalizadaValor, { color: faixaFinalizada.hex }]}>
+          Você ganhou: {formatarPreco(corrida.valorMotorista)}
+        </Text>
+
+        <View style={styles.finalizadaAvaliacao}>
+          <AvaliacaoForm corridaId={corrida.id} autorTipoAtual={TIPO_USUARIO.MOTORISTA} titulo="Como foi o cliente dessa corrida?" />
+        </View>
+
+        <Pressable
+          onPress={() => navigation.replace('Home')}
+          style={({ pressed }) => [styles.botao, { backgroundColor: cores.primaria }, pressed && styles.pressionado]}
+        >
+          <Text style={styles.botaoTexto}>Concluir</Text>
+        </Pressable>
+      </ScrollView>
     )
   }
 
@@ -153,6 +189,9 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
               {formatarDistancia(progresso.distanciaRestanteTotal)} · {formatarDuracaoRestante(progresso.duracaoRestanteTotalSegundos)}
             </Text>
           ) : null}
+          <Pressable onPress={() => navigation.navigate('ChatCorrida', { corridaId: corrida.id })} style={styles.botaoChat} hitSlop={8}>
+            <Text style={styles.botaoChatTexto}>💬</Text>
+          </Pressable>
         </View>
 
         <Text style={styles.painelEndereco}>
@@ -372,6 +411,37 @@ function criarEstilos(cores: Cores) {
     marginTop: 10,
     color: cores.erroTexto,
     fontSize: 12,
+  },
+  botaoChat: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: cores.primaria,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botaoChatTexto: {
+    fontSize: 16,
+  },
+  conteudoFinalizada: {
+    flexGrow: 1,
+    padding: 24,
+    paddingTop: 60,
+  },
+  finalizadaTitulo: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: cores.texto,
+    textAlign: 'center',
+  },
+  finalizadaValor: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  finalizadaAvaliacao: {
+    marginTop: 28,
   },
   })
 }
