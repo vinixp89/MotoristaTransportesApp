@@ -35,7 +35,7 @@ const INTERVALO_MS = 5000
 // enquanto online, as corridas pendentes ou a corrida atual aparecem direto aqui — sem precisar
 // navegar pra outra tela — com notificação sonora assim que uma corrida nova surge.
 export default function HomeScreen({ navigation }: Props) {
-  const { usuario, logout } = useAuth()
+  const { usuario, perfil, logout } = useAuth()
   const { carteiraMotoristaLiberada } = useConfigApp()
   const { cores } = useTema()
   const styles = criarEstilos(cores)
@@ -184,7 +184,7 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={styles.linhaLogo}>
           <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
           <View>
-            <Text style={styles.saudacao}>Olá!</Text>
+            <Text style={styles.saudacao}>Olá{perfil?.nome ? `, ${perfil.nome.split(' ')[0]}` : ''}!</Text>
             <Text style={styles.perfil}>
               Perfil: {usuario?.roles.length ? usuario.roles.join(', ') : 'sem perfil definido'}
             </Text>
