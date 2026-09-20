@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
   View,
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
+import LogoIcon from '../components/LogoIcon'
 import { useConfigApp } from '../hooks/useConfigApp'
 import { useEnvioLocalizacao } from '../hooks/useEnvioLocalizacao'
 import api, { extrairMensagemErro } from '../api/client'
@@ -182,7 +182,7 @@ export default function HomeScreen({ navigation }: Props) {
     <ScrollView style={styles.tela} contentContainerStyle={styles.conteudo}>
       <View style={styles.cabecalho}>
         <View style={styles.linhaLogo}>
-          <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
+          <LogoIcon size={40} />
           <View>
             <Text style={styles.saudacao}>Olá{perfil?.nome ? `, ${perfil.nome.split(' ')[0]}` : ''}!</Text>
             <Text style={styles.perfil}>
@@ -456,10 +456,6 @@ function criarEstilos(cores: Cores) {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  logo: {
-    width: 40,
-    height: 40,
   },
   saudacao: {
     fontSize: 22,

@@ -1,6 +1,7 @@
-import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useTema } from '../context/ThemeContext'
+import LogoIcon from '../components/LogoIcon'
 import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
 
@@ -13,7 +14,7 @@ export default function SobreAppScreen({ navigation }: Props) {
   return (
     <ScrollView style={styles.tela} contentContainerStyle={styles.conteudo}>
       <View style={styles.topo}>
-        <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
+        <LogoIcon size={64} style={styles.logo} />
         <Text style={styles.nome}>Vai na Boa Motorista</Text>
         <Text style={styles.versao}>Versão 1.0.0</Text>
       </View>
@@ -60,8 +61,6 @@ function criarEstilos(cores: Cores) {
       gap: 4,
     },
     logo: {
-      width: 64,
-      height: 64,
       marginBottom: 8,
     },
     nome: {
