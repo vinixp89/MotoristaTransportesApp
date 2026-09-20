@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,6 +13,7 @@ import {
 } from 'react-native'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
+import LogoIcon from '../components/LogoIcon'
 import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
 
@@ -44,7 +44,7 @@ export default function LoginScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
-        <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
+        <LogoIcon size={72} style={styles.logo} />
         <Text style={styles.titulo}>Vai na Boa Motorista</Text>
         <Text style={styles.subtitulo}>Entre com sua conta para continuar</Text>
 
@@ -118,8 +118,6 @@ function criarEstilos(cores: Cores) {
     paddingVertical: 48,
   },
   logo: {
-    width: 72,
-    height: 72,
     marginBottom: 12,
   },
   titulo: {

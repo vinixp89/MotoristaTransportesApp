@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import api, { extrairMensagemErro } from '../api/client'
 import MapaNavegacao from '../components/MapaNavegacao'
 import AvaliacaoForm, { TIPO_USUARIO } from '../components/AvaliacaoForm'
@@ -19,8 +30,53 @@ import type { Corrida } from '../types/corrida'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Navegacao'>
 
+type ClienteDaCorrida = {
+  nome: string
+  avaliacaoMedia: number | null
+}
+
 const STATUS_CANCELADA = 5
 const INTERVALO_MS = 5000
+
+// Selfie de auditoria (câmera frontal, nunca galeria — pra não dar pra "burlar" com foto antiga)
+// tirada ao iniciar/finalizar a corrida. É só um registro pra conferência do Admin depois (ver
+// backend VerificacaoFacialService) — NUNCA bloqueia a viagem: se a permissão for negada ou o
+// motorista cancelar a captura, a corrida segue normal sem essa foto.
+async function capturarSelfieVerificacao(): Promise<ImagePicker.ImagePickerAsset | null> {
+  try {
+    const permissao = await ImagePicker.requestCameraPermissionsAsync()
+    if (!permissao.granted) return null
+
+    const resultado = await ImagePicker.launchCameraAsync({
+      cameraType: ImagePicker.CameraType.front,
+      quality: 0.5,
+      allowsEditing: false,
+    })
+
+    if (resultado.canceled || !resultado.assets?.length) return null
+    return resultado.assets[0]
+  } catch {
+    return null
+  }
+}
+
+// Envio em segundo plano — nunca é aguardado por quem chama, e qualquer erro (rede, comparação)
+// fica só registrado no backend, sem aparecer pro motorista.
+function enviarVerificacaoFacial(corridaId: string, momento: 'Inicio' | 'Fim', foto: ImagePicker.ImagePickerAsset) {
+  const formData = new FormData()
+  formData.append('momento', momento)
+  formData.append('foto', {
+    uri: foto.uri,
+    name: 'verificacao.jpg',
+    type: 'image/jpeg',
+  } as unknown as Blob)
+
+  api
+    .post(`/Corridas/${corridaId}/verificacao-facial`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .catch(() => {})
+}
 
 // Navegação turn-by-turn tipo Maps/Waze: enquanto o motorista ainda não iniciou a viagem, guia
 // ele até o CLIENTE (origem da corrida); depois de iniciar, guia até o DESTINO. Aberta sozinha
@@ -36,12 +92,26 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
   const [finalizando, setFinalizando] = useState(false)
   const [codigo, setCodigo] = useState('')
   const [distanciaReal, setDistanciaReal] = useState('')
+  const [clienteDaCorrida, setClienteDaCorrida] = useState<ClienteDaCorrida | null>(null)
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const clienteDaCorridaBuscadoRef = useRef(false)
 
   const buscar = useCallback(async () => {
     try {
       const { data } = await api.get<Corrida>(`/Corridas/${corridaId}`)
       setCorrida(data)
+
+      // Nome/avaliação do cliente não mudam durante a corrida — busca só uma vez, não a cada
+      // polling (mesmo padrão do motoristaDaCorrida no app Cliente).
+      if (!clienteDaCorridaBuscadoRef.current) {
+        clienteDaCorridaBuscadoRef.current = true
+        try {
+          const { data: dadosCliente } = await api.get<ClienteDaCorrida>(`/Corridas/${corridaId}/cliente`)
+          setClienteDaCorrida(dadosCliente)
+        } catch {
+          // Sem sorte agora — não é crítico pra tela funcionar, deixa como null.
+        }
+      }
 
       // Cancelada não tem o que avaliar — volta direto. Finalizada para o polling mas NÃO navega:
       // fica na tela mostrando o resumo + avaliação do cliente (ver renderização abaixo), só volta
@@ -83,10 +153,13 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
     setIniciando(true)
     setErro('')
 
+    const foto = await capturarSelfieVerificacao()
+
     try {
       const { data } = await api.patch<Corrida>(`/Corridas/${corrida.id}/iniciar`, { codigo })
       setCorrida(data)
       setCodigo('')
+      if (foto) enviarVerificacaoFacial(corrida.id, 'Inicio', foto)
     } catch (error) {
       setErro(extrairMensagemErro(error))
     } finally {
@@ -99,11 +172,14 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
     setFinalizando(true)
     setErro('')
 
+    const foto = await capturarSelfieVerificacao()
+
     try {
       const { data } = await api.patch<{ corrida: Corrida }>(`/Corridas/${corrida.id}/finalizar`, {
         distanciaReal: Number(distanciaReal),
       })
       setCorrida(data.corrida)
+      if (foto) enviarVerificacaoFacial(corrida.id, 'Fim', foto)
       if (intervaloRef.current) {
         clearInterval(intervaloRef.current)
         intervaloRef.current = null
@@ -126,23 +202,29 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
   if (corrida.status === STATUS_FINALIZADA) {
     const faixaFinalizada = obterFaixa(corrida.faixaContratada)
     return (
-      <ScrollView style={styles.tela} contentContainerStyle={styles.conteudoFinalizada}>
-        <Text style={styles.finalizadaTitulo}>Corrida finalizada!</Text>
-        <Text style={[styles.finalizadaValor, { color: faixaFinalizada.hex }]}>
-          Você ganhou: {formatarPreco(corrida.valorMotorista)}
-        </Text>
+      <KeyboardAvoidingView
+        style={styles.tela}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      >
+        <ScrollView style={styles.tela} contentContainerStyle={styles.conteudoFinalizada} keyboardShouldPersistTaps="handled">
+          <Text style={styles.finalizadaTitulo}>Corrida finalizada!</Text>
+          <Text style={[styles.finalizadaValor, { color: faixaFinalizada.hex }]}>
+            Você ganhou: {formatarPreco(corrida.valorMotorista)}
+          </Text>
 
-        <View style={styles.finalizadaAvaliacao}>
-          <AvaliacaoForm corridaId={corrida.id} autorTipoAtual={TIPO_USUARIO.MOTORISTA} titulo="Como foi o cliente dessa corrida?" />
-        </View>
+          <View style={styles.finalizadaAvaliacao}>
+            <AvaliacaoForm corridaId={corrida.id} autorTipoAtual={TIPO_USUARIO.MOTORISTA} titulo="Como foi o cliente dessa corrida?" />
+          </View>
 
-        <Pressable
-          onPress={() => navigation.replace('Home')}
-          style={({ pressed }) => [styles.botao, { backgroundColor: cores.primaria }, pressed && styles.pressionado]}
-        >
-          <Text style={styles.botaoTexto}>Concluir</Text>
-        </Pressable>
-      </ScrollView>
+          <Pressable
+            onPress={() => navigation.replace('Home')}
+            style={({ pressed }) => [styles.botao, { backgroundColor: cores.primaria }, pressed && styles.pressionado]}
+          >
+            <Text style={styles.botaoTexto}>Concluir</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
     )
   }
 
@@ -199,6 +281,13 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
             ? `${corrida.origem.logradouro}, ${corrida.origem.numero} — ${corrida.origem.bairro}`
             : `${corrida.destino.logradouro}, ${corrida.destino.numero} — ${corrida.destino.bairro}`}
         </Text>
+
+        {clienteDaCorrida ? (
+          <Text style={styles.painelCliente}>
+            {clienteDaCorrida.nome}
+            {clienteDaCorrida.avaliacaoMedia != null ? ` · ⭐ ${clienteDaCorrida.avaliacaoMedia.toFixed(1)}` : ''}
+          </Text>
+        ) : null}
 
         <Text style={styles.painelValor}>Você ganha: {formatarPreco(corrida.valorMotorista)} (85%)</Text>
 
@@ -365,6 +454,12 @@ function criarEstilos(cores: Cores) {
     marginTop: 6,
     fontSize: 12,
     color: cores.textoSecundario,
+  },
+  painelCliente: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '600',
+    color: cores.texto,
   },
   painelValor: {
     marginTop: 8,

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import api, { extrairMensagemErro } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
 import type { Cores } from '../theme/colors'
@@ -10,6 +11,37 @@ export default function ConfiguracoesContaScreen() {
   const styles = criarEstilos(cores)
   const [excluindo, setExcluindo] = useState(false)
   const [erro, setErro] = useState('')
+
+  const [senhaAtual, setSenhaAtual] = useState('')
+  const [novaSenha, setNovaSenha] = useState('')
+  const [confirmarSenha, setConfirmarSenha] = useState('')
+  const [trocandoSenha, setTrocandoSenha] = useState(false)
+  const [erroSenha, setErroSenha] = useState('')
+  const [sucessoSenha, setSucessoSenha] = useState(false)
+
+  async function handleTrocarSenha() {
+    setErroSenha('')
+    setSucessoSenha(false)
+
+    if (novaSenha !== confirmarSenha) {
+      setErroSenha('A confirmação não bate com a nova senha.')
+      return
+    }
+
+    setTrocandoSenha(true)
+
+    try {
+      await api.post('/Auth/trocar-senha', { senhaAtual, novaSenha })
+      setSenhaAtual('')
+      setNovaSenha('')
+      setConfirmarSenha('')
+      setSucessoSenha(true)
+    } catch (error) {
+      setErroSenha(extrairMensagemErro(error))
+    } finally {
+      setTrocandoSenha(false)
+    }
+  }
 
   function confirmarExclusao() {
     Alert.alert(
@@ -40,6 +72,54 @@ export default function ConfiguracoesContaScreen() {
       <View style={styles.cartao}>
         <Text style={styles.rotulo}>E-mail da conta</Text>
         <Text style={styles.valor}>{usuario?.email}</Text>
+      </View>
+
+      <View style={styles.cartao}>
+        <Text style={styles.secaoTitulo}>Trocar senha</Text>
+
+        <TextInput
+          value={senhaAtual}
+          onChangeText={setSenhaAtual}
+          placeholder="Senha atual"
+          placeholderTextColor={cores.textoSecundario}
+          secureTextEntry
+          style={styles.input}
+        />
+        <TextInput
+          value={novaSenha}
+          onChangeText={setNovaSenha}
+          placeholder="Nova senha"
+          placeholderTextColor={cores.textoSecundario}
+          secureTextEntry
+          style={styles.input}
+        />
+        <TextInput
+          value={confirmarSenha}
+          onChangeText={setConfirmarSenha}
+          placeholder="Confirmar nova senha"
+          placeholderTextColor={cores.textoSecundario}
+          secureTextEntry
+          style={styles.input}
+        />
+
+        {erroSenha ? <Text style={styles.erroTexto}>{erroSenha}</Text> : null}
+        {sucessoSenha ? <Text style={styles.sucessoTexto}>Senha alterada com sucesso!</Text> : null}
+
+        <Pressable
+          onPress={handleTrocarSenha}
+          disabled={trocandoSenha || !senhaAtual || !novaSenha || !confirmarSenha}
+          style={[
+            styles.botaoTrocarSenha,
+            { backgroundColor: cores.primaria },
+            (trocandoSenha || !senhaAtual || !novaSenha || !confirmarSenha) && styles.desabilitado,
+          ]}
+        >
+          {trocandoSenha ? (
+            <ActivityIndicator color={cores.branco} />
+          ) : (
+            <Text style={styles.botaoTrocarSenhaTexto}>Trocar senha</Text>
+          )}
+        </Pressable>
       </View>
 
       <View style={styles.cartao}>
@@ -122,6 +202,32 @@ function criarEstilos(cores: Cores) {
     erroTexto: {
       color: cores.erroTexto,
       fontSize: 13,
+    },
+    sucessoTexto: {
+      color: cores.primaria,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: cores.borda,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontSize: 15,
+      color: cores.texto,
+      backgroundColor: cores.fundo,
+    },
+    botaoTrocarSenha: {
+      borderRadius: 10,
+      paddingVertical: 13,
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    botaoTrocarSenhaTexto: {
+      color: cores.branco,
+      fontSize: 14,
+      fontWeight: '700',
     },
     botaoExcluir: {
       borderWidth: 1,
