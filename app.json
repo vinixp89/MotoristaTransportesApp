@@ -23,6 +23,7 @@
     },
     "android": {
       "package": "com.vainaboa.motorista",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#9333ea",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -51,6 +52,12 @@
         {
           "cameraPermission": "Usamos a câmera pra tirar a selfie e as fotos do veículo/placa exigidas no cadastro.",
           "photosPermission": "Usamos sua galeria pra escolher a selfie e as fotos do veículo/placa exigidas no cadastro."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#9333ea"
         }
       ]
     ],
