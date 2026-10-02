@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import api, { extrairMensagemErro } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
 import type { Cores } from '../theme/colors'
+import type { RootStackParamList } from '../navigation/types'
 
-export default function ConfiguracoesContaScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, 'ConfiguracoesConta'>
+
+export default function ConfiguracoesContaScreen({ navigation }: Props) {
   const { usuario, excluirConta } = useAuth()
   const { cores } = useTema()
   const styles = criarEstilos(cores)
@@ -73,6 +77,14 @@ export default function ConfiguracoesContaScreen() {
         <Text style={styles.rotulo}>E-mail da conta</Text>
         <Text style={styles.valor}>{usuario?.email}</Text>
       </View>
+
+      <Pressable style={styles.cartaoSuporte} onPress={() => navigation.navigate('ChatSuporte')}>
+        <View>
+          <Text style={styles.secaoTitulo}>Fale com o suporte</Text>
+          <Text style={styles.texto}>Teve algum problema? Mande uma mensagem pra gente.</Text>
+        </View>
+        <Text style={styles.seta}>›</Text>
+      </Pressable>
 
       <View style={styles.cartao}>
         <Text style={styles.secaoTitulo}>Trocar senha</Text>
@@ -172,6 +184,19 @@ function criarEstilos(cores: Cores) {
       borderRadius: 14,
       padding: 16,
       gap: 8,
+    },
+    cartaoSuporte: {
+      backgroundColor: cores.cartao,
+      borderRadius: 14,
+      padding: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    seta: {
+      fontSize: 22,
+      color: cores.textoSecundario,
     },
     rotulo: {
       fontSize: 12,
