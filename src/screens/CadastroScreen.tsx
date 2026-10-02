@@ -87,6 +87,7 @@ export default function CadastroScreen({ navigation }: Props) {
   const [nome, setNome] = useState('')
   const [cnh, setCnh] = useState('')
   const [cpf, setCpf] = useState('')
+  const [telefone, setTelefone] = useState('')
   const [placaVeiculo, setPlacaVeiculo] = useState('')
   const [modeloVeiculo, setModeloVeiculo] = useState('')
   const [anoVeiculo, setAnoVeiculo] = useState('')
@@ -127,6 +128,7 @@ export default function CadastroScreen({ navigation }: Props) {
     nome &&
     cnh &&
     cpf &&
+    telefone &&
     placaVeiculo &&
     modeloVeiculo &&
     anoVeiculo &&
@@ -176,6 +178,7 @@ export default function CadastroScreen({ navigation }: Props) {
       nome,
       cnh,
       cpf,
+      telefone,
       placaVeiculo,
       modeloVeiculo,
       anoVeiculo: anoVeiculoNumero,
@@ -270,6 +273,18 @@ export default function CadastroScreen({ navigation }: Props) {
               style={styles.input}
             />
           </View>
+        </View>
+
+        <View style={styles.campo}>
+          <Text style={styles.rotulo}>Telefone</Text>
+          <TextInput
+            value={telefone}
+            onChangeText={setTelefone}
+            placeholder="(00) 00000-0000"
+            placeholderTextColor="#9ca3af"
+            keyboardType="phone-pad"
+            style={styles.input}
+          />
         </View>
 
         <View style={styles.linhaDupla}>

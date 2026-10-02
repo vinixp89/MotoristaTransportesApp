@@ -22,6 +22,7 @@ export type DadosCadastroMotorista = {
   nome: string
   cnh: string
   cpf: string
+  telefone: string
   placaVeiculo: string
   modeloVeiculo: string
   anoVeiculo: number
