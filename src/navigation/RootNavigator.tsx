@@ -10,6 +10,7 @@ import HomeScreen from '../screens/HomeScreen'
 import ExtratoScreen from '../screens/ExtratoScreen'
 import NavegacaoScreen from '../screens/NavegacaoScreen'
 import ChatCorridaScreen from '../screens/ChatCorridaScreen'
+import ChatSuporteScreen from '../screens/ChatSuporteScreen'
 import PlanoExecutivoScreen from '../screens/PlanoExecutivoScreen'
 import CarteiraScreen from '../screens/CarteiraScreen'
 import SolicitarSaqueScreen from '../screens/SolicitarSaqueScreen'
@@ -57,6 +58,7 @@ export default function RootNavigator() {
           <Stack.Screen name="Extrato" component={ExtratoScreen} options={{ title: 'Extrato de corridas' }} />
           <Stack.Screen name="Navegacao" component={NavegacaoScreen} options={{ headerShown: false }} />
           <Stack.Screen name="ChatCorrida" component={ChatCorridaScreen} options={{ title: 'Chat com o cliente' }} />
+          <Stack.Screen name="ChatSuporte" component={ChatSuporteScreen} options={{ title: 'Fale com o suporte' }} />
           <Stack.Screen name="PlanoExecutivo" component={PlanoExecutivoScreen} options={{ title: 'Categoria Executivo' }} />
           <Stack.Screen name="Carteira" component={CarteiraScreen} options={{ title: 'Saldo e saques' }} />
           <Stack.Screen name="SolicitarSaque" component={SolicitarSaqueScreen} options={{ title: 'Solicitar saque' }} />

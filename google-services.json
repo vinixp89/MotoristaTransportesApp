@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "813504517190",
+    "project_id": "vai-na-boa-motorista",
+    "storage_bucket": "vai-na-boa-motorista.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:813504517190:android:1979cfa31e760d8c426647",
+        "android_client_info": {
+          "package_name": "com.vainaboa.motorista"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8Q36Z8bYqSizqzCZ_wdydTf9Qf-LQFzs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -140,7 +140,7 @@ function criarEstilos(cores: Cores) {
       paddingHorizontal: 12,
       paddingVertical: 8,
       fontSize: 13,
-      minHeight: 56,
+      minHeight: 90,
       color: cores.texto,
       backgroundColor: cores.fundo,
       textAlignVertical: 'top',

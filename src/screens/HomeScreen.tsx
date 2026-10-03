@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAuth } from '../context/AuthContext'
 import LogoIcon from '../components/LogoIcon'
 import { useConfigApp } from '../hooks/useConfigApp'
@@ -231,7 +232,8 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('Carteira')}
             style={({ pressed }) => [styles.cardExecutivo, styles.cardMetade, pressed && styles.pressionado]}
           >
-            <Text style={styles.cardExecutivoTexto}>💰 Saldo e saques</Text>
+            <Ionicons name="wallet-outline" size={16} color={cores.branco} />
+            <Text style={styles.cardExecutivoTexto}>Saldo e saques</Text>
           </Pressable>
         ) : null}
 
@@ -239,7 +241,8 @@ export default function HomeScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('PlanoExecutivo')}
           style={({ pressed }) => [styles.cardExecutivo, styles.cardMetade, pressed && styles.pressionado]}
         >
-          <Text style={styles.cardExecutivoTexto}>⭐ Executivo</Text>
+          <MaterialCommunityIcons name="star-outline" size={16} color={cores.branco} />
+          <Text style={styles.cardExecutivoTexto}>Executivo</Text>
         </Pressable>
       </View>
 
@@ -520,10 +523,13 @@ function criarEstilos(cores: Cores) {
     marginBottom: 0,
   },
   cardExecutivo: {
+    flexDirection: 'row',
+    gap: 6,
     backgroundColor: '#111827',
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
   },
   cardExecutivoTexto: {

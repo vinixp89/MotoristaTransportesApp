@@ -204,7 +204,7 @@ export default function NavegacaoScreen({ route, navigation }: Props) {
     return (
       <KeyboardAvoidingView
         style={styles.tela}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
       >
         <ScrollView style={styles.tela} contentContainerStyle={styles.conteudoFinalizada} keyboardShouldPersistTaps="handled">
