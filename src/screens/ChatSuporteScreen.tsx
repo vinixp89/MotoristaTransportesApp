@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { FlatList, Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import api, { extrairMensagemErro } from '../api/client'
 import { useTema } from '../context/ThemeContext'
 import type { Cores } from '../theme/colors'
@@ -29,6 +30,23 @@ export default function ChatSuporteScreen() {
   const ultimaDataRef = useRef<string | null>(null)
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const listaRef = useRef<FlatList<Mensagem>>(null)
+
+  // O app desenha por baixo da barra de navegação do Android (edge-to-edge): sem o inset de baixo o
+  // campo de texto fica coberto por ela, e sem o KeyboardAvoidingView medido o teclado cobre o campo.
+  const insets = useSafeAreaInsets()
+  const areaRef = useRef<View>(null)
+  const [offsetTopo, setOffsetTopo] = useState(0)
+  const [tecladoAberto, setTecladoAberto] = useState(false)
+
+  useEffect(() => {
+    const mostrar = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setTecladoAberto(true))
+    const esconder = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setTecladoAberto(false))
+
+    return () => {
+      mostrar.remove()
+      esconder.remove()
+    }
+  }, [])
 
   const buscar = useCallback(async () => {
     try {
@@ -78,7 +96,8 @@ export default function ChatSuporteScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.tela} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+    <View ref={areaRef} style={styles.tela} onLayout={() => areaRef.current?.measureInWindow((_x, y) => setOffsetTopo(y))}>
+    <KeyboardAvoidingView style={styles.corpo} behavior="padding" keyboardVerticalOffset={offsetTopo}>
       <FlatList
         ref={listaRef}
         data={mensagens}
@@ -107,7 +126,7 @@ export default function ChatSuporteScreen() {
 
       {erro ? <Text style={styles.erro}>{erro}</Text> : null}
 
-      <View style={styles.linhaEnvio}>
+      <View style={[styles.linhaEnvio, { paddingBottom: tecladoAberto ? 10 : Math.max(insets.bottom, 10) }]}>
         <TextInput
           value={texto}
           onChangeText={setTexto}
@@ -130,6 +149,7 @@ export default function ChatSuporteScreen() {
         </Pressable>
       </View>
     </KeyboardAvoidingView>
+    </View>
   )
 }
 
@@ -138,6 +158,9 @@ function criarEstilos(cores: Cores) {
     tela: {
       flex: 1,
       backgroundColor: cores.fundo,
+    },
+    corpo: {
+      flex: 1,
     },
     lista: {
       padding: 16,
