@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -13,62 +12,13 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import * as ImagePicker from 'expo-image-picker'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
 import EnderecoFields, { enderecoVazio, type Endereco } from '../components/EnderecoFields'
+import { CAMPOS_FOTO, escolherFoto, type FotoSlot } from '../utils/fotosVerificacao'
 import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
-
-type FotoSlot = { uri: string; nome: string; tipo: string } | null
-
-const CAMPOS_FOTO = [
-  { chave: 'selfie' as const, rotulo: 'Selfie', dica: 'Seu rosto, bem visível' },
-  { chave: 'fotoVeiculo' as const, rotulo: 'Foto do veículo', dica: 'De frente, o carro inteiro' },
-  { chave: 'fotoPlaca' as const, rotulo: 'Foto da placa', dica: 'Placa legível, de perto' },
-]
-
-// Abre um Alert perguntando câmera ou galeria, e devolve o arquivo escolhido pronto pra mandar
-// como multipart (ver handleCadastrar) — ou null se o motorista cancelar em qualquer etapa.
-function escolherFoto(nomeCampo: string): Promise<FotoSlot> {
-  return new Promise((resolve) => {
-    Alert.alert('Adicionar foto', undefined, [
-      { text: 'Cancelar', style: 'cancel', onPress: () => resolve(null) },
-      {
-        text: 'Câmera',
-        onPress: async () => {
-          const permissao = await ImagePicker.requestCameraPermissionsAsync()
-          if (!permissao.granted) {
-            resolve(null)
-            return
-          }
-          const resultado = await ImagePicker.launchCameraAsync({ quality: 0.7 })
-          resolve(paraFotoSlot(resultado, nomeCampo))
-        },
-      },
-      {
-        text: 'Galeria',
-        onPress: async () => {
-          const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync()
-          if (!permissao.granted) {
-            resolve(null)
-            return
-          }
-          const resultado = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] })
-          resolve(paraFotoSlot(resultado, nomeCampo))
-        },
-      },
-    ])
-  })
-}
-
-function paraFotoSlot(resultado: ImagePicker.ImagePickerResult, nomeCampo: string): FotoSlot {
-  if (resultado.canceled || !resultado.assets?.[0]) return null
-
-  const asset = resultado.assets[0]
-  return { uri: asset.uri, nome: `${nomeCampo}.jpg`, tipo: asset.mimeType ?? 'image/jpeg' }
-}
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Cadastro'>
 
@@ -209,7 +159,8 @@ export default function CadastroScreen({ navigation }: Props) {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
     } catch {
-      falhas.push('as fotos')
+      // Sem aviso aqui: a conta já existe e perfil.fotosEnviadas fica falso, então o RootNavigator
+      // trava o app na tela de envio de fotos (ver EnviarFotosScreen) até elas serem enviadas.
     }
 
     try {
@@ -221,7 +172,7 @@ export default function CadastroScreen({ navigation }: Props) {
     setEnviandoFotos(false)
 
     if (falhas.length > 0) {
-      setErro(`Conta criada, mas ${falhas.join(' e ')} não foram registrados. Tente de novo em Configurações da conta.`)
+      setErro(`Conta criada, mas ${falhas.join(' e ')} não foram registrados. Tente de novo mais tarde.`)
     }
 
     // Sem navigation aqui de propósito: a conta já existe (usuario setado no AuthContext), o

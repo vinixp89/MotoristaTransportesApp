@@ -6,6 +6,7 @@ import ThemeToggleButton from '../components/ThemeToggleButton'
 import LoginScreen from '../screens/LoginScreen'
 import CadastroScreen from '../screens/CadastroScreen'
 import ConfirmarSmsScreen from '../screens/ConfirmarSmsScreen'
+import EnviarFotosScreen from '../screens/EnviarFotosScreen'
 import HomeScreen from '../screens/HomeScreen'
 import ExtratoScreen from '../screens/ExtratoScreen'
 import NavegacaoScreen from '../screens/NavegacaoScreen'
@@ -40,6 +41,10 @@ export default function RootNavigator() {
   // verdade que o telefone ainda não foi confirmado.
   const precisaConfirmarSms = Boolean(usuario) && perfil !== null && !perfil.telefoneVerificado
 
+  // Mesma regra, depois do SMS: selfie, foto do veículo e da placa são obrigatórias (ver
+  // EnviarFotosScreen) — pega quem se cadastrou sem fotos ou cujo upload falhou no cadastro.
+  const precisaEnviarFotos = Boolean(usuario) && perfil !== null && perfil.telefoneVerificado && !perfil.fotosEnviadas
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -52,6 +57,8 @@ export default function RootNavigator() {
     >
       {precisaConfirmarSms ? (
         <Stack.Screen name="ConfirmarSms" component={ConfirmarSmsScreen} options={{ headerShown: false }} />
+      ) : precisaEnviarFotos ? (
+        <Stack.Screen name="EnviarFotos" component={EnviarFotosScreen} options={{ headerShown: false }} />
       ) : usuario ? (
         <>
           <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />

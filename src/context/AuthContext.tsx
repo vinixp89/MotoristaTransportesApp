@@ -16,6 +16,7 @@ export type MotoristaPerfil = {
   nome: string
   telefoneVerificado: boolean
   termosAceitos: boolean
+  fotosEnviadas: boolean
 }
 
 export type DadosCadastroMotorista = {
