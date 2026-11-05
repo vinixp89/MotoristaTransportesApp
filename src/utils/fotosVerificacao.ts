@@ -1,15 +1,22 @@
 import { Alert } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import type { TipoVeiculo } from './veiculo'
 
 // Seleção das 3 fotos de verificação (selfie, veículo, placa), usada tanto no cadastro quanto na tela
 // que trava o app enquanto faltar alguma (ver EnviarFotosScreen).
 export type FotoSlot = { uri: string; nome: string; tipo: string } | null
 
-export const CAMPOS_FOTO = [
-  { chave: 'selfie' as const, rotulo: 'Selfie', dica: 'Seu rosto, bem visível' },
-  { chave: 'fotoVeiculo' as const, rotulo: 'Foto do veículo', dica: 'De frente, o carro inteiro' },
-  { chave: 'fotoPlaca' as const, rotulo: 'Foto da placa', dica: 'Placa legível, de perto' },
-]
+export function camposFoto(tipoVeiculo: TipoVeiculo | null) {
+  return [
+    { chave: 'selfie' as const, rotulo: 'Selfie', dica: 'Seu rosto, bem visível' },
+    {
+      chave: 'fotoVeiculo' as const,
+      rotulo: tipoVeiculo === 'moto' ? 'Foto da moto' : 'Foto do veículo',
+      dica: tipoVeiculo === 'moto' ? 'De lado, a moto inteira' : 'De frente, o carro inteiro',
+    },
+    { chave: 'fotoPlaca' as const, rotulo: 'Foto da placa', dica: 'Placa legível, de perto' },
+  ]
+}
 
 // Abre um Alert perguntando câmera ou galeria, e devolve o arquivo escolhido pronto pra mandar
 // como multipart (ver handleCadastrar) — ou null se o motorista cancelar em qualquer etapa.

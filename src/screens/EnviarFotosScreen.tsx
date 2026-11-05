@@ -11,7 +11,8 @@ import {
 import api, { extrairMensagemErro } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
-import { CAMPOS_FOTO, escolherFoto, type FotoSlot } from '../utils/fotosVerificacao'
+import { camposFoto, escolherFoto, type FotoSlot } from '../utils/fotosVerificacao'
+import { tipoVeiculoDaApi } from '../utils/veiculo'
 import type { Cores } from '../theme/colors'
 
 // Tela travada, igual à de confirmação de SMS: enquanto o perfil não tiver as 3 fotos de verificação
@@ -19,7 +20,7 @@ import type { Cores } from '../theme/colors'
 // Cobre quem se cadastrou sem fotos ou cujo envio falhou depois de criar a conta. "Sair" é a única
 // outra saída.
 export default function EnviarFotosScreen() {
-  const { recarregarPerfil, logout } = useAuth()
+  const { perfil, recarregarPerfil, logout } = useAuth()
   const { cores } = useTema()
   const styles = criarEstilos(cores)
 
@@ -72,7 +73,7 @@ export default function EnviarFotosScreen() {
       </Text>
 
       <View style={styles.linhaFotos}>
-        {CAMPOS_FOTO.map(({ chave, rotulo, dica }) => {
+        {camposFoto(tipoVeiculoDaApi(perfil?.tipoVeiculo)).map(({ chave, rotulo, dica }) => {
           const foto = fotos[chave]
           return (
             <Pressable key={chave} onPress={() => handleEscolherFoto(chave)} style={styles.fotoSlot}>

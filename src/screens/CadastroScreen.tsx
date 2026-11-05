@@ -16,7 +16,8 @@ import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
 import EnderecoFields, { enderecoVazio, type Endereco } from '../components/EnderecoFields'
-import { CAMPOS_FOTO, escolherFoto, type FotoSlot } from '../utils/fotosVerificacao'
+import { camposFoto, escolherFoto, type FotoSlot } from '../utils/fotosVerificacao'
+import { TIPO_VEICULO_API, type TipoVeiculo } from '../utils/veiculo'
 import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
 
@@ -34,6 +35,9 @@ export default function CadastroScreen({ navigation }: Props) {
   const { cores } = useTema()
   const styles = criarEstilos(cores)
 
+  // Sem valor inicial de propósito: o motorista precisa escolher, pra ninguém cair em "carro" por esquecimento
+  // (motorista de moto só recebe corrida de moto e o de carro só de carro).
+  const [tipoVeiculo, setTipoVeiculo] = useState<TipoVeiculo | null>(null)
   const [nome, setNome] = useState('')
   const [cnh, setCnh] = useState('')
   const [cpf, setCpf] = useState('')
@@ -75,6 +79,7 @@ export default function CadastroScreen({ navigation }: Props) {
   const enderecoResolvido = Boolean(endereco.logradouro)
   const fotosPreenchidas = fotos.selfie && fotos.fotoVeiculo && fotos.fotoPlaca
   const camposObrigatoriosPreenchidos =
+    tipoVeiculo &&
     nome &&
     cnh &&
     cpf &&
@@ -132,6 +137,7 @@ export default function CadastroScreen({ navigation }: Props) {
       placaVeiculo,
       modeloVeiculo,
       anoVeiculo: anoVeiculoNumero,
+      tipoVeiculo: TIPO_VEICULO_API[tipoVeiculo ?? 'carro'],
       logradouro: endereco.logradouro,
       numero: endereco.numero,
       complemento: endereco.complemento,
@@ -190,6 +196,30 @@ export default function CadastroScreen({ navigation }: Props) {
 
         {etapa === 'form' && (
         <>
+        <View style={styles.campo}>
+          <Text style={styles.rotulo}>Você dirige</Text>
+          <View style={styles.linhaTipoVeiculo}>
+            {(['carro', 'moto'] as const).map((tipo) => {
+              const selecionado = tipoVeiculo === tipo
+              return (
+                <Pressable
+                  key={tipo}
+                  onPress={() => setTipoVeiculo(tipo)}
+                  style={[styles.opcaoVeiculo, selecionado && styles.opcaoVeiculoSelecionada]}
+                >
+                  <Text style={styles.opcaoVeiculoIcone}>{tipo === 'carro' ? '🚗' : '🏍️'}</Text>
+                  <Text style={[styles.opcaoVeiculoTexto, selecionado && styles.opcaoVeiculoTextoSelecionado]}>
+                    {tipo === 'carro' ? 'Carro' : 'Moto'}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+          <Text style={styles.ajuda}>
+            Quem dirige moto recebe só corridas de moto, e quem dirige carro só corridas de carro.
+          </Text>
+        </View>
+
         <View style={styles.campo}>
           <Text style={styles.rotulo}>Nome completo</Text>
           <TextInput
@@ -322,7 +352,7 @@ export default function CadastroScreen({ navigation }: Props) {
         <View style={styles.campo}>
           <Text style={styles.rotulo}>Fotos de verificação</Text>
           <View style={styles.linhaFotos}>
-            {CAMPOS_FOTO.map(({ chave, rotulo, dica }) => {
+            {camposFoto(tipoVeiculo).map(({ chave, rotulo, dica }) => {
               const foto = fotos[chave]
               return (
                 <Pressable key={chave} onPress={() => handleEscolherFoto(chave)} style={styles.fotoSlot}>
@@ -453,6 +483,37 @@ function criarEstilos(cores: Cores) {
     fontWeight: '600',
     color: cores.texto,
     marginBottom: 6,
+  },
+  linhaTipoVeiculo: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  opcaoVeiculo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    borderRadius: 10,
+    backgroundColor: cores.cartao,
+  },
+  opcaoVeiculoSelecionada: {
+    borderColor: cores.primaria,
+    backgroundColor: cores.primaria,
+  },
+  opcaoVeiculoIcone: {
+    fontSize: 20,
+  },
+  opcaoVeiculoTexto: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: cores.texto,
+  },
+  opcaoVeiculoTextoSelecionado: {
+    color: cores.branco,
   },
   ajuda: {
     fontSize: 12,

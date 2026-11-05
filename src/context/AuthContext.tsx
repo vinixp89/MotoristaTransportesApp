@@ -17,6 +17,8 @@ export type MotoristaPerfil = {
   telefoneVerificado: boolean
   termosAceitos: boolean
   fotosEnviadas: boolean
+  // 0 = carro, 1 = moto (ver utils/veiculo.ts)
+  tipoVeiculo: number
 }
 
 export type DadosCadastroMotorista = {
@@ -27,6 +29,7 @@ export type DadosCadastroMotorista = {
   placaVeiculo: string
   modeloVeiculo: string
   anoVeiculo: number
+  tipoVeiculo: number
   logradouro: string
   numero: string
   complemento?: string

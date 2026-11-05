@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
+import AvisoNovaVersao from '../components/AvisoNovaVersao'
 import LoginScreen from '../screens/LoginScreen'
 import CadastroScreen from '../screens/CadastroScreen'
 import ConfirmarSmsScreen from '../screens/ConfirmarSmsScreen'
@@ -46,6 +47,7 @@ export default function RootNavigator() {
   const precisaEnviarFotos = Boolean(usuario) && perfil !== null && perfil.telefoneVerificado && !perfil.fotosEnviadas
 
   return (
+    <>
     <Stack.Navigator
       screenOptions={{
         headerTintColor: cores.primaria,
@@ -81,5 +83,7 @@ export default function RootNavigator() {
         </>
       )}
     </Stack.Navigator>
+    <AvisoNovaVersao />
+    </>
   )
 }

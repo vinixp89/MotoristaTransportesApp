@@ -237,13 +237,16 @@ export default function HomeScreen({ navigation }: Props) {
           </Pressable>
         ) : null}
 
-        <Pressable
-          onPress={() => navigation.navigate('PlanoExecutivo')}
-          style={({ pressed }) => [styles.cardExecutivo, styles.cardMetade, pressed && styles.pressionado]}
-        >
-          <MaterialCommunityIcons name="star-outline" size={16} color={cores.branco} />
-          <Text style={styles.cardExecutivoTexto}>Executivo</Text>
-        </Pressable>
+        {/* Executivo é só de carro — motorista de moto nem vê a opção (ver Motorista.VeiculoElegivelParaExecutivo no backend). */}
+        {perfil?.tipoVeiculo !== 1 ? (
+          <Pressable
+            onPress={() => navigation.navigate('PlanoExecutivo')}
+            style={({ pressed }) => [styles.cardExecutivo, styles.cardMetade, pressed && styles.pressionado]}
+          >
+            <MaterialCommunityIcons name="star-outline" size={16} color={cores.branco} />
+            <Text style={styles.cardExecutivoTexto}>Executivo</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {(erro || erroLocalizacao) ? (
