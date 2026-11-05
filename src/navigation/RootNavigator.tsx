@@ -42,9 +42,10 @@ export default function RootNavigator() {
   // verdade que o telefone ainda não foi confirmado.
   const precisaConfirmarSms = Boolean(usuario) && perfil !== null && !perfil.telefoneVerificado
 
-  // Mesma regra, depois do SMS: selfie, foto do veículo e da placa são obrigatórias (ver
-  // EnviarFotosScreen) — pega quem se cadastrou sem fotos ou cujo upload falhou no cadastro.
-  const precisaEnviarFotos = Boolean(usuario) && perfil !== null && perfil.telefoneVerificado && !perfil.fotosEnviadas
+  // Mesma regra, depois do SMS: selfie, foto do veículo e da placa (e, pra moto, CNH A/EAR, foto da
+  // CNH e regras da moto) são obrigatórias (ver EnviarFotosScreen) — pega quem se cadastrou sem
+  // elas, cujo envio falhou no cadastro, ou o motorista de moto cadastrado antes dessas exigências.
+  const precisaEnviarFotos = Boolean(usuario) && perfil !== null && perfil.telefoneVerificado && perfil.cadastroCompleto === false
 
   return (
     <>

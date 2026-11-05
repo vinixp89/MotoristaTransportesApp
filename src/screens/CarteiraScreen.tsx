@@ -87,7 +87,10 @@ export default function CarteiraScreen({ navigation }: Props) {
     )
   }
 
-  const saldo = carteira?.saldo ?? 0
+  const saldoTotal = carteira?.saldo ?? 0
+  const saldoBloqueado = carteira?.saldoBloqueado ?? 0
+  // Servidor antigo não manda saldoDisponivel — cai no saldo total, como antes.
+  const saldo = carteira?.saldoDisponivel ?? saldoTotal
   const podeSacar = carteira !== null && saldo >= carteira.valorMinimoSaque
 
   return (
@@ -105,6 +108,12 @@ export default function CarteiraScreen({ navigation }: Props) {
       <View style={styles.cartaoSaldo}>
         <Text style={styles.saldoRotulo}>Saldo disponível</Text>
         <Text style={styles.saldoValor}>{formatarPreco(saldo)}</Text>
+
+        {saldoBloqueado > 0 ? (
+          <Text style={styles.dicaBloqueado}>
+            🔒 {formatarPreco(saldoBloqueado)} de bônus bloqueados — liberam pra saque quando você finalizar sua 1ª corrida.
+          </Text>
+        ) : null}
 
         <Pressable
           onPress={() => navigation.navigate('SolicitarSaque', { saldo, valorMinimo: carteira?.valorMinimoSaque ?? 0 })}
@@ -233,6 +242,13 @@ function criarEstilos(cores: Cores) {
       color: cores.branco,
       fontSize: 14,
       fontWeight: '700',
+    },
+    dicaBloqueado: {
+      marginTop: 10,
+      fontSize: 12,
+      color: '#fcd34d',
+      textAlign: 'center',
+      lineHeight: 17,
     },
     dicaMinimo: {
       marginTop: 10,

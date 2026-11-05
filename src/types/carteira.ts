@@ -17,6 +17,10 @@ export type CarteiraMotorista = {
   id: string
   motoristaId: string
   saldo: number
+  // Parte do saldo ainda travada (bônus de boas-vindas até a 1ª corrida) e o que dá pra sacar agora
+  // (saldo - saldoBloqueado) — ver CarteiraMotoristaService no backend.
+  saldoBloqueado?: number
+  saldoDisponivel?: number
   valorMinimoSaque: number
   dataCriacao: string
 }

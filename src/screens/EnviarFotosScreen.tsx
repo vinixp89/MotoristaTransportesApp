@@ -11,30 +11,50 @@ import {
 import api, { extrairMensagemErro } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
-import { camposFoto, escolherFoto, type FotoSlot } from '../utils/fotosVerificacao'
-import { tipoVeiculoDaApi } from '../utils/veiculo'
+import { camposFoto, escolherFoto, type ChaveFoto, type FotoSlot } from '../utils/fotosVerificacao'
+import { TEXTO_CNH_EAR, TEXTO_REGRAS_MOTO, tipoVeiculoDaApi } from '../utils/veiculo'
 import type { Cores } from '../theme/colors'
 
-// Tela travada, igual à de confirmação de SMS: enquanto o perfil não tiver as 3 fotos de verificação
-// (selfie, veículo e placa), o RootNavigator mostra só essa tela, nunca a Home (ver RootNavigator.tsx).
-// Cobre quem se cadastrou sem fotos ou cujo envio falhou depois de criar a conta. "Sair" é a única
-// outra saída.
+// Tela travada, igual à de confirmação de SMS: enquanto o cadastro tiver alguma pendência
+// (perfil.cadastroCompleto falso), o RootNavigator mostra só essa tela, nunca a Home (ver
+// RootNavigator.tsx). Pede só o que falta: as fotos de verificação (selfie, veículo, placa e, pra
+// moto, a CNH) e, pra moto, a declaração de CNH A/EAR e o aceite das regras da moto. Cobre quem se
+// cadastrou sem fotos, cujo envio falhou depois de criar a conta, ou o motorista de moto cadastrado
+// antes dessas exigências existirem. "Sair" é a única outra saída.
 export default function EnviarFotosScreen() {
   const { perfil, recarregarPerfil, logout } = useAuth()
   const { cores } = useTema()
   const styles = criarEstilos(cores)
 
-  const [fotos, setFotos] = useState<Record<'selfie' | 'fotoVeiculo' | 'fotoPlaca', FotoSlot>>({
+  const tipoVeiculo = tipoVeiculoDaApi(perfil?.tipoVeiculo)
+  const ehMoto = tipoVeiculo === 'moto'
+
+  // Só os quadros das fotos que ainda não estão no servidor.
+  const jaTemFoto: Record<ChaveFoto, boolean> = {
+    selfie: Boolean(perfil?.temFotoSelfie),
+    fotoVeiculo: Boolean(perfil?.temFotoVeiculo),
+    fotoPlaca: Boolean(perfil?.temFotoPlaca),
+    fotoCnh: Boolean(perfil?.temFotoCnh),
+  }
+  const camposFaltando = camposFoto(tipoVeiculo).filter((c) => !jaTemFoto[c.chave])
+  const precisaRegrasMoto = ehMoto && !(perfil?.cnhCategoriaAEar && perfil?.regrasMotoAceitas)
+
+  const [fotos, setFotos] = useState<Record<ChaveFoto, FotoSlot>>({
     selfie: null,
     fotoVeiculo: null,
     fotoPlaca: null,
+    fotoCnh: null,
   })
+  const [cnhAEar, setCnhAEar] = useState(false)
+  const [regrasAceitas, setRegrasAceitas] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
 
-  const todasPreenchidas = Boolean(fotos.selfie && fotos.fotoVeiculo && fotos.fotoPlaca)
+  const fotosOk = camposFaltando.every((c) => fotos[c.chave])
+  const regrasOk = !precisaRegrasMoto || (cnhAEar && regrasAceitas)
+  const podeEnviar = fotosOk && regrasOk
 
-  async function handleEscolherFoto(campo: keyof typeof fotos) {
+  async function handleEscolherFoto(campo: ChaveFoto) {
     const foto = await escolherFoto(campo)
     if (foto) setFotos((atual) => ({ ...atual, [campo]: foto }))
   }
@@ -44,17 +64,24 @@ export default function EnviarFotosScreen() {
     setEnviando(true)
 
     try {
-      const dadosFormulario = new FormData()
-      for (const [campo, foto] of Object.entries(fotos)) {
-        if (!foto) continue
-        dadosFormulario.append(campo, { uri: foto.uri, name: foto.nome, type: foto.tipo } as unknown as Blob)
+      if (camposFaltando.length > 0) {
+        const dadosFormulario = new FormData()
+        for (const campo of camposFaltando) {
+          const foto = fotos[campo.chave]
+          if (!foto) continue
+          dadosFormulario.append(campo.chave, { uri: foto.uri, name: foto.nome, type: foto.tipo } as unknown as Blob)
+        }
+
+        await api.post('/Motoristas/fotos', dadosFormulario, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
       }
 
-      await api.post('/Motoristas/fotos', dadosFormulario, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      if (precisaRegrasMoto) {
+        await api.post('/Motoristas/regras-moto', { cnhCategoriaAEar: cnhAEar, aceitoRegras: regrasAceitas })
+      }
 
-      // Com as 3 fotos salvas, o perfil passa a ter fotosEnviadas e o RootNavigator libera a Home.
+      // Com tudo salvo, o perfil passa a ter cadastroCompleto e o RootNavigator libera a Home.
       await recarregarPerfil()
     } catch (error) {
       setErro(extrairMensagemErro(error))
@@ -65,36 +92,62 @@ export default function EnviarFotosScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.conteudo} style={styles.tela}>
-      <Text style={styles.icone}>📷</Text>
-      <Text style={styles.titulo}>Envie suas fotos de verificação</Text>
+      <Text style={styles.icone}>📋</Text>
+      <Text style={styles.titulo}>Complete seu cadastro</Text>
       <Text style={styles.subtitulo}>
-        Pra liberar o app, precisamos da sua selfie, da foto do veículo e da foto da placa. Toque em cada
-        quadro pra tirar a foto ou escolher da galeria.
+        Pra liberar o app, falta enviar {camposFaltando.length > 0 ? 'as fotos abaixo' : ''}
+        {camposFaltando.length > 0 && precisaRegrasMoto ? ' e ' : ''}
+        {precisaRegrasMoto ? 'confirmar as regras da moto' : ''}. Toque em cada quadro pra tirar a foto ou
+        escolher da galeria.
       </Text>
 
-      <View style={styles.linhaFotos}>
-        {camposFoto(tipoVeiculoDaApi(perfil?.tipoVeiculo)).map(({ chave, rotulo, dica }) => {
-          const foto = fotos[chave]
-          return (
-            <Pressable key={chave} onPress={() => handleEscolherFoto(chave)} style={styles.fotoSlot}>
-              {foto ? (
-                <>
-                  <Image source={{ uri: foto.uri }} style={styles.fotoPreview} />
-                  <View style={styles.fotoSelo}>
-                    <Text style={styles.fotoSeloTexto}>✓ {rotulo}</Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.fotoIcone}>📷</Text>
-                  <Text style={styles.fotoRotulo}>{rotulo}</Text>
-                  <Text style={styles.fotoDica}>{dica}</Text>
-                </>
-              )}
-            </Pressable>
-          )
-        })}
-      </View>
+      {camposFaltando.length > 0 ? (
+        <View style={styles.linhaFotos}>
+          {camposFaltando.map(({ chave, rotulo, dica }) => {
+            const foto = fotos[chave]
+            return (
+              <Pressable key={chave} onPress={() => handleEscolherFoto(chave)} style={styles.fotoSlot}>
+                {foto ? (
+                  <>
+                    <Image source={{ uri: foto.uri }} style={styles.fotoPreview} />
+                    <View style={styles.fotoSelo}>
+                      <Text style={styles.fotoSeloTexto}>✓ {rotulo}</Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.fotoIcone}>📷</Text>
+                    <Text style={styles.fotoRotulo}>{rotulo}</Text>
+                    <Text style={styles.fotoDica}>{dica}</Text>
+                  </>
+                )}
+              </Pressable>
+            )
+          })}
+        </View>
+      ) : null}
+
+      {precisaRegrasMoto ? (
+        <View style={styles.blocoRegras}>
+          <Pressable onPress={() => setCnhAEar((atual) => !atual)} style={styles.checkboxLinha}>
+            <View style={[styles.checkbox, cnhAEar && styles.checkboxMarcado]}>
+              {cnhAEar ? <Text style={styles.checkboxMarca}>✓</Text> : null}
+            </View>
+            <Text style={styles.checkboxTexto}>{TEXTO_CNH_EAR}</Text>
+          </Pressable>
+
+          <View style={styles.regrasCaixa}>
+            <Text style={styles.regrasTexto}>Regras para motoristas de moto{'\n\n'}• {TEXTO_REGRAS_MOTO}</Text>
+          </View>
+
+          <Pressable onPress={() => setRegrasAceitas((atual) => !atual)} style={styles.checkboxLinha}>
+            <View style={[styles.checkbox, regrasAceitas && styles.checkboxMarcado]}>
+              {regrasAceitas ? <Text style={styles.checkboxMarca}>✓</Text> : null}
+            </View>
+            <Text style={styles.checkboxTexto}>Li e aceito as regras para motoristas de moto.</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {erro ? (
         <View style={styles.erroCaixa}>
@@ -104,14 +157,14 @@ export default function EnviarFotosScreen() {
 
       <Pressable
         onPress={handleEnviar}
-        disabled={enviando || !todasPreenchidas}
+        disabled={enviando || !podeEnviar}
         style={({ pressed }) => [
           styles.botao,
-          (enviando || !todasPreenchidas) && styles.botaoDesabilitado,
+          (enviando || !podeEnviar) && styles.botaoDesabilitado,
           pressed && styles.botaoPressionado,
         ]}
       >
-        {enviando ? <ActivityIndicator color={cores.branco} /> : <Text style={styles.botaoTexto}>Enviar fotos</Text>}
+        {enviando ? <ActivityIndicator color={cores.branco} /> : <Text style={styles.botaoTexto}>Enviar</Text>}
       </Pressable>
 
       <Pressable onPress={logout} hitSlop={8} style={styles.linkSair}>
@@ -155,11 +208,14 @@ function criarEstilos(cores: Cores) {
     linhaFotos: {
       width: '100%',
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: 10,
       marginBottom: 20,
     },
     fotoSlot: {
-      flex: 1,
+      flexBasis: '30%',
+      flexGrow: 0,
+      flexShrink: 0,
       aspectRatio: 0.85,
       borderWidth: 1,
       borderStyle: 'dashed',
@@ -203,6 +259,53 @@ function criarEstilos(cores: Cores) {
       fontWeight: '700',
       color: '#ffffff',
       textAlign: 'center',
+    },
+    blocoRegras: {
+      width: '100%',
+      marginBottom: 20,
+      gap: 14,
+    },
+    checkboxLinha: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    checkbox: {
+      width: 22,
+      height: 22,
+      borderWidth: 1,
+      borderColor: cores.borda,
+      borderRadius: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: cores.cartao,
+    },
+    checkboxMarcado: {
+      backgroundColor: cores.primaria,
+      borderColor: cores.primaria,
+    },
+    checkboxMarca: {
+      color: cores.branco,
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    checkboxTexto: {
+      flex: 1,
+      fontSize: 13,
+      color: cores.texto,
+      lineHeight: 18,
+    },
+    regrasCaixa: {
+      borderWidth: 1,
+      borderColor: cores.borda,
+      borderRadius: 10,
+      backgroundColor: cores.cartao,
+      padding: 12,
+    },
+    regrasTexto: {
+      fontSize: 12,
+      color: cores.textoSecundario,
+      lineHeight: 18,
     },
     erroCaixa: {
       width: '100%',

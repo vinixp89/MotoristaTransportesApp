@@ -6,8 +6,10 @@ import type { TipoVeiculo } from './veiculo'
 // que trava o app enquanto faltar alguma (ver EnviarFotosScreen).
 export type FotoSlot = { uri: string; nome: string; tipo: string } | null
 
+export type ChaveFoto = 'selfie' | 'fotoVeiculo' | 'fotoPlaca' | 'fotoCnh'
+
 export function camposFoto(tipoVeiculo: TipoVeiculo | null) {
-  return [
+  const campos: { chave: ChaveFoto; rotulo: string; dica: string }[] = [
     { chave: 'selfie' as const, rotulo: 'Selfie', dica: 'Seu rosto, bem visível' },
     {
       chave: 'fotoVeiculo' as const,
@@ -16,6 +18,11 @@ export function camposFoto(tipoVeiculo: TipoVeiculo | null) {
     },
     { chave: 'fotoPlaca' as const, rotulo: 'Foto da placa', dica: 'Placa legível, de perto' },
   ]
+
+  // Motorista de moto também manda a foto da CNH (categoria A com EAR).
+  if (tipoVeiculo === 'moto') campos.push({ chave: 'fotoCnh', rotulo: 'Foto da CNH', dica: 'Frente, bem legível' })
+
+  return campos
 }
 
 // Abre um Alert perguntando câmera ou galeria, e devolve o arquivo escolhido pronto pra mandar

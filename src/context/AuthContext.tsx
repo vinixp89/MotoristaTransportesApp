@@ -19,6 +19,15 @@ export type MotoristaPerfil = {
   fotosEnviadas: boolean
   // 0 = carro, 1 = moto (ver utils/veiculo.ts)
   tipoVeiculo: number
+  temFotoSelfie: boolean
+  temFotoVeiculo: boolean
+  temFotoPlaca: boolean
+  temFotoCnh: boolean
+  cnhCategoriaAEar: boolean
+  regrasMotoAceitas: boolean
+  // Sem nenhuma pendência de fotos/documentos (inclui as exigências extras da moto) — o app trava
+  // na tela de pendências enquanto for false.
+  cadastroCompleto: boolean
 }
 
 export type DadosCadastroMotorista = {
@@ -30,6 +39,7 @@ export type DadosCadastroMotorista = {
   modeloVeiculo: string
   anoVeiculo: number
   tipoVeiculo: number
+  cnhCategoriaAEar: boolean
   logradouro: string
   numero: string
   complemento?: string

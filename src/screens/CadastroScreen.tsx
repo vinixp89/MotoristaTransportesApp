@@ -16,8 +16,8 @@ import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
 import EnderecoFields, { enderecoVazio, type Endereco } from '../components/EnderecoFields'
-import { camposFoto, escolherFoto, type FotoSlot } from '../utils/fotosVerificacao'
-import { TIPO_VEICULO_API, type TipoVeiculo } from '../utils/veiculo'
+import { camposFoto, escolherFoto, type ChaveFoto, type FotoSlot } from '../utils/fotosVerificacao'
+import { TEXTO_CNH_EAR, TEXTO_REGRAS_MOTO, TIPO_VEICULO_API, type TipoVeiculo } from '../utils/veiculo'
 import type { Cores } from '../theme/colors'
 import type { RootStackParamList } from '../navigation/types'
 
@@ -49,11 +49,15 @@ export default function CadastroScreen({ navigation }: Props) {
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [endereco, setEndereco] = useState<Endereco>(enderecoVazio)
-  const [fotos, setFotos] = useState<Record<'selfie' | 'fotoVeiculo' | 'fotoPlaca', FotoSlot>>({
+  const [fotos, setFotos] = useState<Record<ChaveFoto, FotoSlot>>({
     selfie: null,
     fotoVeiculo: null,
     fotoPlaca: null,
+    fotoCnh: null,
   })
+  // Só pra moto: declaração de CNH A/EAR (no formulário) e aceite das regras da moto (na etapa dos termos).
+  const [cnhAEar, setCnhAEar] = useState(false)
+  const [regrasMotoAceitas, setRegrasMotoAceitas] = useState(false)
   const [enviandoFotos, setEnviandoFotos] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -77,9 +81,12 @@ export default function CadastroScreen({ navigation }: Props) {
   }, [etapa, termosTexto])
 
   const enderecoResolvido = Boolean(endereco.logradouro)
-  const fotosPreenchidas = fotos.selfie && fotos.fotoVeiculo && fotos.fotoPlaca
+  const ehMoto = tipoVeiculo === 'moto'
+  const fotosPreenchidas = fotos.selfie && fotos.fotoVeiculo && fotos.fotoPlaca && (!ehMoto || fotos.fotoCnh)
+  const termosEtapaOk = termosAceitos && (!ehMoto || regrasMotoAceitas)
   const camposObrigatoriosPreenchidos =
     tipoVeiculo &&
+    (!ehMoto || cnhAEar) &&
     nome &&
     cnh &&
     cpf &&
@@ -127,6 +134,11 @@ export default function CadastroScreen({ navigation }: Props) {
       return
     }
 
+    if (ehMoto && !regrasMotoAceitas) {
+      setErro('Você precisa aceitar as regras da moto pra continuar.')
+      return
+    }
+
     const anoVeiculoNumero = Number(anoVeiculo)
 
     const resultado = await cadastrar(email, senha, {
@@ -138,6 +150,7 @@ export default function CadastroScreen({ navigation }: Props) {
       modeloVeiculo,
       anoVeiculo: anoVeiculoNumero,
       tipoVeiculo: TIPO_VEICULO_API[tipoVeiculo ?? 'carro'],
+      cnhCategoriaAEar: ehMoto && cnhAEar,
       logradouro: endereco.logradouro,
       numero: endereco.numero,
       complemento: endereco.complemento,
@@ -156,8 +169,10 @@ export default function CadastroScreen({ navigation }: Props) {
 
     try {
       const dadosFormulario = new FormData()
+      const chavesDoTipo = camposFoto(tipoVeiculo).map((c) => c.chave)
       for (const [campo, foto] of Object.entries(fotos)) {
-        if (!foto) continue
+        // Só manda as fotos que o tipo de veículo pede (a da CNH é só de moto).
+        if (!foto || !chavesDoTipo.includes(campo as ChaveFoto)) continue
         dadosFormulario.append(campo, { uri: foto.uri, name: foto.nome, type: foto.tipo } as unknown as Blob)
       }
 
@@ -173,6 +188,14 @@ export default function CadastroScreen({ navigation }: Props) {
       await api.post('/Auth/aceitar-termos')
     } catch {
       falhas.push('o aceite dos termos')
+    }
+
+    if (ehMoto) {
+      try {
+        await api.post('/Motoristas/regras-moto', { cnhCategoriaAEar: true, aceitoRegras: true })
+      } catch {
+        // Sem aviso: perfil.cadastroCompleto fica falso e a tela de pendências pede de novo.
+      }
     }
 
     setEnviandoFotos(false)
@@ -255,6 +278,17 @@ export default function CadastroScreen({ navigation }: Props) {
             />
           </View>
         </View>
+
+        {ehMoto ? (
+          <View style={styles.campo}>
+            <Pressable onPress={() => setCnhAEar((atual) => !atual)} style={styles.checkboxLinha}>
+              <View style={[styles.checkbox, cnhAEar && styles.checkboxMarcado]}>
+                {cnhAEar ? <Text style={styles.checkboxMarca}>✓</Text> : null}
+              </View>
+              <Text style={styles.checkboxTexto}>{TEXTO_CNH_EAR}</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         <View style={styles.campo}>
           <Text style={styles.rotulo}>Telefone</Text>
@@ -396,6 +430,20 @@ export default function CadastroScreen({ navigation }: Props) {
               </View>
               <Text style={styles.checkboxTexto}>Li e aceito os termos de uso e o contrato de prestação de serviços.</Text>
             </Pressable>
+
+            {ehMoto ? (
+              <>
+                <View style={[styles.termosCaixa, { marginTop: 16 }]}>
+                  <Text style={styles.termosTexto}>Regras para motoristas de moto{'\n\n'}• {TEXTO_REGRAS_MOTO}</Text>
+                </View>
+                <Pressable onPress={() => setRegrasMotoAceitas((atual) => !atual)} style={styles.checkboxLinha}>
+                  <View style={[styles.checkbox, regrasMotoAceitas && styles.checkboxMarcado]}>
+                    {regrasMotoAceitas ? <Text style={styles.checkboxMarca}>✓</Text> : null}
+                  </View>
+                  <Text style={styles.checkboxTexto}>Li e aceito as regras para motoristas de moto.</Text>
+                </Pressable>
+              </>
+            ) : null}
           </View>
         )}
 
@@ -417,13 +465,13 @@ export default function CadastroScreen({ navigation }: Props) {
             disabled={
               carregando ||
               enviandoFotos ||
-              (etapa === 'form' ? !camposObrigatoriosPreenchidos : !termosAceitos)
+              (etapa === 'form' ? !camposObrigatoriosPreenchidos : !termosEtapaOk)
             }
             style={({ pressed }) => [
               styles.botao,
               (carregando ||
                 enviandoFotos ||
-                (etapa === 'form' ? !camposObrigatoriosPreenchidos : !termosAceitos)) &&
+                (etapa === 'form' ? !camposObrigatoriosPreenchidos : !termosEtapaOk)) &&
                 styles.botaoDesabilitado,
               pressed && styles.botaoPressionado,
             ]}
@@ -636,10 +684,14 @@ function criarEstilos(cores: Cores) {
   },
   linhaFotos: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
   fotoSlot: {
-    flex: 1,
+    // 3 por linha: a 4ª foto (CNH, só moto) quebra pra linha de baixo com o mesmo tamanho.
+    flexBasis: '30%',
+    flexGrow: 0,
+    flexShrink: 0,
     aspectRatio: 0.85,
     borderWidth: 1,
     borderStyle: 'dashed',

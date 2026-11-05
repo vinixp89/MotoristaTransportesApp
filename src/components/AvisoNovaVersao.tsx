@@ -7,8 +7,8 @@ import type { Cores } from '../theme/colors'
 
 // Pop-up "Nova versão disponível": toda vez que o app abre, pergunta pro backend qual é a última
 // versão liberada na Play Store (GET /Config/app → motoristaVersaoAtual, ver ConfigController) e, se
-// a instalada (versionCode do build) for menor, oferece levar o motorista pra loja. "Agora não" só
-// fecha até a próxima abertura do app — de propósito não guarda nada em disco.
+// a instalada (versionCode do build) for menor, bloqueia o app com um aviso que só tem o botão de
+// atualizar (sem "Agora não" e sem fechar no botão voltar) — a atualização é obrigatória.
 export default function AvisoNovaVersao() {
   const { cores } = useTema()
   const styles = criarEstilos(cores)
@@ -43,26 +43,24 @@ export default function AvisoNovaVersao() {
     } catch {
       await Linking.openURL(`https://play.google.com/store/apps/details?id=${pacote}`)
     }
-    setVisivel(false)
+    // Não esconde o aviso depois de abrir a loja: se o usuário voltar sem atualizar, ele continua aí.
   }
 
   return (
-    <Modal visible={visivel} transparent animationType="fade" onRequestClose={() => setVisivel(false)}>
+    // onRequestClose vazio: o botão voltar do Android não fecha o aviso.
+    <Modal visible={visivel} transparent animationType="fade" onRequestClose={() => {}}>
       <View style={styles.fundo}>
         <View style={styles.caixa}>
           <Text style={styles.icone}>🚀</Text>
           <Text style={styles.titulo}>Nova versão disponível</Text>
           <Text style={styles.texto}>
-            Atualize o app pra ter as últimas melhorias e correções. Leva só um minuto.
+            Pra continuar usando o app, atualize pra versão mais recente. Leva só um minuto.
           </Text>
 
           <Pressable onPress={handleAtualizar} style={({ pressed }) => [styles.botao, pressed && styles.botaoPressionado]}>
             <Text style={styles.botaoTexto}>Atualizar agora</Text>
           </Pressable>
 
-          <Pressable onPress={() => setVisivel(false)} hitSlop={8} style={styles.linkAgoraNao}>
-            <Text style={styles.linkAgoraNaoTexto}>Agora não</Text>
-          </Pressable>
         </View>
       </View>
     </Modal>
@@ -117,13 +115,6 @@ function criarEstilos(cores: Cores) {
       color: cores.branco,
       fontSize: 15,
       fontWeight: '600',
-    },
-    linkAgoraNao: {
-      marginTop: 16,
-    },
-    linkAgoraNaoTexto: {
-      fontSize: 13,
-      color: cores.textoSecundario,
     },
   })
 }
