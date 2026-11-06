@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../context/ThemeContext'
@@ -230,7 +231,11 @@ export default function CadastroScreen({ navigation }: Props) {
                   onPress={() => setTipoVeiculo(tipo)}
                   style={[styles.opcaoVeiculo, selecionado && styles.opcaoVeiculoSelecionada]}
                 >
-                  <Text style={styles.opcaoVeiculoIcone}>{tipo === 'carro' ? '🚗' : '🏍️'}</Text>
+                  <MaterialCommunityIcons
+                    name={tipo === 'carro' ? 'car' : 'motorbike'}
+                    size={26}
+                    color={selecionado ? cores.branco : cores.texto}
+                  />
                   <Text style={[styles.opcaoVeiculoTexto, selecionado && styles.opcaoVeiculoTextoSelecionado]}>
                     {tipo === 'carro' ? 'Carro' : 'Moto'}
                   </Text>
@@ -551,9 +556,6 @@ function criarEstilos(cores: Cores) {
   opcaoVeiculoSelecionada: {
     borderColor: cores.primaria,
     backgroundColor: cores.primaria,
-  },
-  opcaoVeiculoIcone: {
-    fontSize: 20,
   },
   opcaoVeiculoTexto: {
     fontSize: 15,
